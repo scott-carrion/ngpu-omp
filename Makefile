@@ -1,3 +1,7 @@
-makemain : main.cpp
-	g++ main.cpp -fopenmp -o a.exe
+# Simple Makefile for OpenMP project
 
+all : main.cpp
+	g++ main.cpp -fopenmp -o app
+clean:
+	rm *.o
+	rm app
