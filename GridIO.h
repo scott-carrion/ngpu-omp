@@ -49,6 +49,7 @@ void byteswap(void *data, int n)
 // Swaps bytes in an array of length n.
 template <class T>
 void byteswaparray(T *data, int n){
+    #pragma omp target teams distribute parallel for  // TODO: TEST ME
     for ( int i = 0; i < n; ++i ) byteswap(&(data[i]), sizeof(T));
 }
 

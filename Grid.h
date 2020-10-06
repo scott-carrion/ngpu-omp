@@ -6,6 +6,8 @@
 #include <sstream>   // std::stringstream
 #include <string>    // std::string
 
+#include <omp.h>     // OpenMP header
+
 #include "MapInfo.h"
 
 template <typename T>
@@ -147,15 +149,32 @@ Grid<T>::Grid ( int c, int r, int b )
     
     // initialize array to noData
     data = new T[vol];
-    for ( i = 0; i < vol; i++ ) data[i] = nul;
+
+    // Parallelizing this loop using OpenMP
+    #pragma omp target teams distribute parallel for
+    for ( i = 0; i < vol; i++ ) { data[i] = nul; }
     stats = new GridStats[nb];
     
     // set default band names
     bandNames = new std::string[nb];
+
+    // Parallelizing this loop using OpenMP TODO: figure out stringstream mapping
+    // This freaks out and dies, printing the "nontrivial type is not guaranteed to be mapped correctly" warning
+    // then nvlink fails to link symbols that seem to be related to std::stringstream
+    // 
+    // This is probably because std::stringstream has no copy constructor
+        
+    std::stringstream* ss_ptr = &ss;
+
+    // #pragma omp target teams distribute parallel for
+    #pragma omp parallel for
     for ( i = 0; i < nb; i++ ) {
         ss.str(std::string());      // clear stringstream
         ss << "Band " << i + 1;
         bandNames[i] = ss.str();
+        // ss_ptr->str(std::string());
+	// ss_ptr->operator<<("Band ").operator<<(i + 1);
+	// bandNames[i] = ss_ptr->str();
     }
 }
 
@@ -169,11 +188,18 @@ Grid<T>::Grid ( const Grid<T> & g )
 
     // initialize array to noData
     data = new T[vol];
-    for ( i = 0; i < vol; i++ ) data[i] = g.data[i];
+
+    // Parallelizing this loop using OpenMP TODO figure out mapping for Grid.
+    // Interesting... This doesn't freak out and die but still prints the "nontrivial type is not guaranteed to be mapped correctly" warning
+    // #pragma omp target teams distribute parallel for
+    for ( i = 0; i < vol; i++ ) { data[i] = g.data[i]; }
     stats = new GridStats[nb];
     
     // set band names to input grid's band names
     bandNames = new std::string[nb];
+
+    // Parallelizing this loop using OpenMP TODO figure out mapping for Grid
+    // #pragma omp target teams distribute parallel for
     for ( i = 0; i < nb; i++ ) {
         bandNames[i] = g.bandNames[i].c_str();
         stats[i] = g.stats[i];
@@ -196,11 +222,17 @@ Grid<T>::Grid ( const Grid<T> & g, int k )
     
     // initialize array to noData
     data = new T[vol];
-    for ( i = 0; i < vol; i++ ) data[i] = nul;
+
+    // Parallelizing this loop using OpenMP
+    #pragma omp target teams distribute parallel for
+    for ( i = 0; i < vol; i++ ) { data[i] = nul; }
     stats = new GridStats[nb];
     
     // set default band names
     bandNames = new std::string[nb];
+
+    // Parallelizing this loop using OpenMP TODO figure out stringstream mapping
+    // #pragma omp target teams distribute parallel for
     for ( i = 0; i < nb; i++ ){
         ss.str(std::string());      // clear stringstream
         ss << "Band " << i + 1;
@@ -240,12 +272,18 @@ Grid<T> & Grid<T>::operator= ( const Grid<T> & g )
     // set array to input grid's values
     if ( data ) delete [] data;
     data = new T[vol];
-    for ( i = 0; i < vol; i++ ) data[i] = g.data[i];
+
+    // Parallelizing this loop using OpenMP TODO figure out mapping for Grid
+    // #pragma omp target teams distribute parallel for
+    for ( i = 0; i < vol; i++ ) { data[i] = g.data[i]; }
     stats = new GridStats[nb];
     
     // set band names to input grid's band names
     if ( bandNames ){ delete [] bandNames; }
     bandNames = new std::string[nb];
+
+    // Parallelizing this loop using OpenMP TODO figure out mapping for Grid
+    // #pragma omp target teams distribute parallel for
     for ( i = 0; i < nb; i++ ){
         bandNames[i] = g.bandNames[i].c_str();
         stats[i] = g.stats[i];
@@ -426,6 +464,9 @@ void Grid<T>::set_nbands(int n)
     // replace band name array with new number of bands
     delete bandNames;
     bandNames = new std::string[nb];
+
+    // Parallelize this loop using OpenMP TODO figure out stringstream mapping
+    // #pragma omp target teams distribute parallel for
     for (int i = 0; i < nb; i++){
         ss.str(std::string()); // clear stringstream;
         ss << "Band " << i + 1;
@@ -493,7 +534,9 @@ void Grid<T>::calculateStatistics ()
 {
     int i, j, k, idx;
     int count;
-    
+ 
+    // TODO: FIGURE OUT HOW TO PARALLELIZE THIS USING OPENMP
+    #pragma omp target teams distribute parallel for
     for ( k = 0; k < nb; ++k ) {
         stats[k].minimum = std::numeric_limits<T>::max();
         stats[k].maximum = std::numeric_limits<T>::min();
