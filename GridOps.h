@@ -99,10 +99,14 @@ Grid<T> skyview ( const Grid<T> & dem, int daz, double r )
     Grid<T> out(dem, 1);
     
     int count = 0;
-   
-    #pragma omp parallel for private(count,flag,angle,k,kk,d,sum,a,sinAz,cosAz,Amax,ii,jj,z) shared(out) collapse(2) 
+
+    //#pragma omp parallel for private(count,flag,angle,k,kk,d,sum,a,sinAz,cosAz,Amax,ii,jj,z) shared(out) collapse(2)
+    //#pragma omp parallel for collapse(2)
+    //#pragma omp target teams distribute parallel for shared(out, interval, dmax, deg2rad) collapse(2)
+    #pragma omp parallel for shared(out, interval, dmax, deg2rad) collapse(2)
     for ( i = 0; i < dem.nrows(); ++i ) {
         for ( j = 0; j < dem.ncols(); ++j ) {
+    
             std::cout << "\rskyview " << (static_cast<double>(count++) / dem.size()) << "%        ";
             
             k = dem.getIndex(i, j);
@@ -115,19 +119,21 @@ Grid<T> skyview ( const Grid<T> & dem, int daz, double r )
                 
                 // find maximum angle from horizontal
                 Amax = 0.0;
+		//#pragma omp parallel for
                 for ( d = 1; d <= dmax; ++d ) {
                     // get coordinates at point
                     ii = (i+0.5) - d * cosAz;
                     jj = (j+0.5) + d * sinAz;
                     
+
                     if ( ii < 0 || ii >= dem.nrows()
                             || jj < 0 || jj >= dem.ncols() )
                         break;
-                    
                     // interpolate value at point
                     flag = false;
                     cells = getNearest4(dem, ii, jj);
-                    for ( kk = 0; !flag && kk < cells.size(); ++kk ){
+                    
+		for ( kk = 0; !flag && kk < cells.size(); ++kk ){
                         if ( cells[kk].value == dem.noData() )
                             flag = true;
                     }
@@ -178,6 +184,8 @@ Grid<T> prominence ( const Grid<T> & dem, int daz, double r )
     
     int count = 0;
     
+   //#pragma omp target teams distribute parallel for shared(out, interval, dmax, deg2rad) collapse(2)
+   #pragma omp parallel for shared(out, interval, dmax, deg2rad) collapse(2)
     for ( i = 0; i < dem.nrows(); ++i ) {
         for ( j = 0; j < dem.ncols(); ++j ) {
             std::cout << "\rprominence " << (static_cast<double>(count++) / dem.size()) << "%        ";
@@ -186,13 +194,15 @@ Grid<T> prominence ( const Grid<T> & dem, int daz, double r )
             
             // scan in each direction
             sum = 0.0;
-            for ( a = 0; a < 360; a += daz) {
+            
+	    for ( a = 0; a < 360; a += daz) {
                 sinAz = sin(a * deg2rad);
                 cosAz = cos(a * deg2rad);
                 
                 // find maximum angle from horizontal
                 Amax = 0.0;
-                for ( d = 1; d <= dmax; ++d ) {
+                
+		for ( d = 1; d <= dmax; ++d ) {
                     // get coordinates at point
                     ii = (i+0.5) - d * cosAz;
                     jj = (j+0.5) + d * sinAz;
@@ -201,13 +211,14 @@ Grid<T> prominence ( const Grid<T> & dem, int daz, double r )
                             || jj < 0 || jj >= dem.ncols() )
                         break;
                     
-                    // interpolate value at point
+		    // interpolate value at point
                     flag = false;
                     cells = getNearest4(dem, ii, jj);
-                    for ( kk = 0; !flag && kk < cells.size(); ++kk ){
-                        if ( cells[kk].value == dem.noData() )
-                            flag = true;
-                    }
+                    
+		    for ( kk = 0; !flag && kk < cells.size(); ++kk ){
+                       if ( cells[kk].value == dem.noData() )
+				flag = true;
+		    }
                     if ( flag ) {
                         angle = 0.0;
                         continue;

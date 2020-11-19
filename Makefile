@@ -35,11 +35,14 @@ OBJS = $(addsuffix .o, $(basename $(addprefix $(BUILD_DIR)/, $(notdir $(SOURCES)
 #OBJS_2 = $(addsuffix .o, $(basename $(addprefix $(BUILD_DIR)/, $(notdir $(SOURCES_2)))))
 
 # Extra fun stuff
-.PHONY: all clean  # Phony targets
+
+# Phony targets
+.PHONY: all clean
 UNAME_S := $(shell uname -s)
 
 # Compiler flags and libraries to link go here
-CXXFLAGS = -g -std=c++11 -fopenmp -fopenmp-targets=nvptx64
+#CXXFLAGS = -g -std=c++11 -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda
+CXXFLAGS = -g -std=c++11 -fopenmp
 LIBS =
 
 ####################################################################################
@@ -81,3 +84,5 @@ $(EXE): $(OBJS)
 
 clean:
 	rm -rf $(BUILD_DIR)
+	-rm skyview*
+	-rm prominence*

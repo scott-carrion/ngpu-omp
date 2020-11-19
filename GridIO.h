@@ -49,7 +49,6 @@ void byteswap(void *data, int n)
 // Swaps bytes in an array of length n.
 template <class T>
 void byteswaparray(T *data, int n){
-    #pragma omp target teams distribute parallel for  // TODO: TEST ME
     for ( int i = 0; i < n; ++i ) byteswap(&(data[i]), sizeof(T));
 }
 
@@ -225,22 +224,30 @@ Grid<float> loadGrid (const std::string & fn)
     if ( info.datatype == 1 ){       // byte (unsigned integer) [8 bit]
         unsigned char * data;
         loadGridHelper(grid, disk, data, grid.get_volume(), 1, swap);
+        // loadGridHelper(grid, disk, data, 4, 1, swap);  // Attempting to use smaller constant grid size for very small problem size
     }
     else if ( info.datatype == 2 ){  // signed integer [16 bit]
         short * data;
         loadGridHelper(grid, disk, data, grid.get_volume(), 2, swap);
+        // loadGridHelper(grid, disk, data, 4, 2, swap);  // Attempting to use smaller constant grid size for very small problem size
     }
     else if ( info.datatype == 3 ){  // signed integer [32 bit]
         int * data;
         loadGridHelper(grid, disk, data, grid.get_volume(), 4, swap);
+        // loadGridHelper(grid, disk, data, 4, 4, swap);  // Attempting to use smaller constant grid size for very small problem size
+
     }
     else if ( info.datatype == 4 ){  // float [32 bit]
         float * data;
         loadGridHelper(grid, disk, data, grid.get_volume(), 4, swap);
+        //loadGridHelper(grid, disk, data, 4, 4, swap);  // Attempting to use smaller constant grid size for very small problem size
+
     }
     else if ( info.datatype == 5 ){  // double [64 bit]
         double * data;
         loadGridHelper(grid, disk, data, grid.get_volume(), 8, swap);
+        //loadGridHelper(grid, disk, data, 4, 8, swap);  // Attempting to use smaller constant grid size for very small problem size
+	
     }
     else if ( info.datatype == 6 ){  // float complex, real-imaginary pair
         //std::complex<float> * data;
@@ -253,18 +260,26 @@ Grid<float> loadGrid (const std::string & fn)
     else if ( info.datatype == 12 ){ // unsigned integer [16 bit]
         unsigned short * data;
         loadGridHelper(grid, disk, data, grid.get_volume(), 2, swap);
+        //loadGridHelper(grid, disk, data, 4, 2, swap);  // Attempting to use smaller constant grid size for very small problem size
+
     }
     else if ( info.datatype == 13 ){ // unsigned integer [32 bit]
         unsigned int * data;
         loadGridHelper(grid, disk, data, grid.get_volume(), 4, swap);
+        //loadGridHelper(grid, disk, data, 4, 4, swap);  // Attempting to use smaller constant grid size for very small problem size
+
     }
     else if ( info.datatype == 14 ){ // signed integer [64 bit]
         long long * data;
         loadGridHelper(grid, disk, data, grid.get_volume(), 8, swap);
+        //loadGridHelper(grid, disk, data, 4, 8, swap);  // Attempting to use smaller constant grid size for very small problem size
+
     }
     else if ( info.datatype == 15 ){ // unsigned integer [64 bit]
         unsigned long long * data;
         loadGridHelper(grid, disk, data, grid.get_volume(), 8, swap);
+        //loadGridHelper(grid, disk, data, 4, 8, swap);  // Attempting to use smaller constant grid size for very small problem size
+
     }
     else {
         std::cout << "ERROR: data type error\n";
@@ -294,7 +309,8 @@ void loadBandHelper (Grid<T> & grid, int k, int ngrids, std::ifstream & file,
     if ( grid.get_interleave() == "bsq" ){
         int n = grid.get_size();
         file.ignore(n * k * bytes);
-        loadGridHelper(grid, file, data, n, bytes, swap);
+        //loadGridHelper(grid, file, data, n, bytes, swap);
+        loadGridHelper(grid, file, data, 100, bytes, swap);  // XXX using very small size here
     }
     
     // load band-interleave by pixel
@@ -384,22 +400,27 @@ Grid<float> loadBand (const std::string & fn, int k)
     if ( info.datatype == 1 ){       // byte (unsigned integer) [8 bit]
         unsigned char * data;
         loadBandHelper(grid, k, info.ngrids, disk, data, 1, swap);
+        //loadBandHelper(grid, k, 4, disk, data, 1, swap);
     }
     else if ( info.datatype == 2 ){  // signed integer [16 bit]
         short * data;
         loadBandHelper(grid, k, info.ngrids, disk, data, 2, swap);
+        //loadBandHelper(grid, k, 4, disk, data, 2, swap);
     }
     else if ( info.datatype == 3 ){  // signed integer [32 bit]
         int * data;
         loadBandHelper(grid, k, info.ngrids, disk, data, 4, swap);
+        //loadBandHelper(grid, k, 4, disk, data, 4, swap);
     }
     else if ( info.datatype == 4 ){  // float [32 bit]
         float * data;
         loadBandHelper(grid, k, info.ngrids, disk, data, 4, swap);
+        //loadBandHelper(grid, k, 4, disk, data, 4, swap);
     }
     else if ( info.datatype == 5 ){  // double [64 bit]
         double * data;
         loadBandHelper(grid, k, info.ngrids, disk, data, 8, swap);
+        //loadBandHelper(grid, k, 4, disk, data, 8, swap);
     }
     else if ( info.datatype == 6 ){  // float complex, real-imaginary pair
         //std::complex<float> * data;
@@ -412,18 +433,22 @@ Grid<float> loadBand (const std::string & fn, int k)
     else if ( info.datatype == 12 ){ // unsigned integer [16 bit]
         unsigned short * data;
         loadBandHelper(grid, k, info.ngrids, disk, data, 2, swap);
+        //loadBandHelper(grid, k, 4, disk, data, 2, swap);
     }
     else if ( info.datatype == 13 ){ // unsigned integer [32 bit]
         unsigned int * data;
         loadBandHelper(grid, k, info.ngrids, disk, data, 4, swap);
+        //loadBandHelper(grid, k, 4, disk, data, 4, swap);
     }
     else if ( info.datatype == 14 ){ // signed integer [64 bit]
         long long * data;
         loadBandHelper(grid, k, info.ngrids, disk, data, 8, swap);
+        //loadBandHelper(grid, k, 4, disk, data, 8, swap);
     }
     else if ( info.datatype == 15 ){ // unsigned integer [64 bit]
         unsigned long long * data;
         loadBandHelper(grid, k, info.ngrids, disk, data, 8, swap);
+        //loadBandHelper(grid, k, 4, disk, data, 8, swap);
     }
     else {
         std::cout << "ERROR: data type error\n";

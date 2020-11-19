@@ -151,7 +151,9 @@ Grid<T>::Grid ( int c, int r, int b )
     data = new T[vol];
 
     // Parallelizing this loop using OpenMP
-    #pragma omp target teams distribute parallel for
+    //#pragma omp target map(to:nul, vol) map(from:data)
+    //#pragma omp teams distribute parallel for
+    //#pragma omp parallel for shared(nul, data)
     for ( i = 0; i < vol; i++ ) { data[i] = nul; }
     stats = new GridStats[nb];
     
@@ -167,7 +169,7 @@ Grid<T>::Grid ( int c, int r, int b )
     std::stringstream* ss_ptr = &ss;
 
     // #pragma omp target teams distribute parallel for
-    #pragma omp parallel for
+    //#pragma omp parallel for
     for ( i = 0; i < nb; i++ ) {
         ss.str(std::string());      // clear stringstream
         ss << "Band " << i + 1;
@@ -224,7 +226,7 @@ Grid<T>::Grid ( const Grid<T> & g, int k )
     data = new T[vol];
 
     // Parallelizing this loop using OpenMP
-    #pragma omp target teams distribute parallel for
+    // #pragma omp target teams distribute parallel for
     for ( i = 0; i < vol; i++ ) { data[i] = nul; }
     stats = new GridStats[nb];
     
@@ -536,7 +538,7 @@ void Grid<T>::calculateStatistics ()
     int count;
  
     // TODO: FIGURE OUT HOW TO PARALLELIZE THIS USING OPENMP
-    #pragma omp target teams distribute parallel for
+    //#pragma omp target teams distribute parallel for
     for ( k = 0; k < nb; ++k ) {
         stats[k].minimum = std::numeric_limits<T>::max();
         stats[k].maximum = std::numeric_limits<T>::min();
