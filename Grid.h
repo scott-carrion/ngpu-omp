@@ -153,7 +153,7 @@ Grid<T>::Grid ( int c, int r, int b )
     // Parallelizing this loop using OpenMP
     //#pragma omp target map(to:nul, vol) map(from:data)
     //#pragma omp teams distribute parallel for
-    //#pragma omp parallel for shared(nul, data)
+    #pragma omp target teams distribute parallel for shared(nul, data)
     for ( i = 0; i < vol; i++ ) { data[i] = nul; }
     stats = new GridStats[nb];
     
@@ -168,7 +168,6 @@ Grid<T>::Grid ( int c, int r, int b )
         
     std::stringstream* ss_ptr = &ss;
 
-    // #pragma omp target teams distribute parallel for
     //#pragma omp parallel for
     for ( i = 0; i < nb; i++ ) {
         ss.str(std::string());      // clear stringstream
@@ -193,7 +192,7 @@ Grid<T>::Grid ( const Grid<T> & g )
 
     // Parallelizing this loop using OpenMP TODO figure out mapping for Grid.
     // Interesting... This doesn't freak out and die but still prints the "nontrivial type is not guaranteed to be mapped correctly" warning
-    // #pragma omp target teams distribute parallel for
+    #pragma omp target teams distribute parallel for shared(data, g)
     for ( i = 0; i < vol; i++ ) { data[i] = g.data[i]; }
     stats = new GridStats[nb];
     
@@ -201,7 +200,7 @@ Grid<T>::Grid ( const Grid<T> & g )
     bandNames = new std::string[nb];
 
     // Parallelizing this loop using OpenMP TODO figure out mapping for Grid
-    // #pragma omp target teams distribute parallel for
+    #pragma omp target teams distribute parallel for shared(stats, g)
     for ( i = 0; i < nb; i++ ) {
         bandNames[i] = g.bandNames[i].c_str();
         stats[i] = g.stats[i];
@@ -226,7 +225,7 @@ Grid<T>::Grid ( const Grid<T> & g, int k )
     data = new T[vol];
 
     // Parallelizing this loop using OpenMP
-    // #pragma omp target teams distribute parallel for
+    #pragma omp target teams distribute parallel for shared(nul, data)
     for ( i = 0; i < vol; i++ ) { data[i] = nul; }
     stats = new GridStats[nb];
     
@@ -276,7 +275,7 @@ Grid<T> & Grid<T>::operator= ( const Grid<T> & g )
     data = new T[vol];
 
     // Parallelizing this loop using OpenMP TODO figure out mapping for Grid
-    // #pragma omp target teams distribute parallel for
+    #pragma omp target teams distribute parallel for shared(data, g)
     for ( i = 0; i < vol; i++ ) { data[i] = g.data[i]; }
     stats = new GridStats[nb];
     
@@ -285,7 +284,7 @@ Grid<T> & Grid<T>::operator= ( const Grid<T> & g )
     bandNames = new std::string[nb];
 
     // Parallelizing this loop using OpenMP TODO figure out mapping for Grid
-    // #pragma omp target teams distribute parallel for
+    #pragma omp target teams distribute parallel for shared(g)
     for ( i = 0; i < nb; i++ ){
         bandNames[i] = g.bandNames[i].c_str();
         stats[i] = g.stats[i];
@@ -538,7 +537,7 @@ void Grid<T>::calculateStatistics ()
     int count;
  
     // TODO: FIGURE OUT HOW TO PARALLELIZE THIS USING OPENMP
-    //#pragma omp target teams distribute parallel for
+    //#pragma omp target teams distribute parallel for private()
     for ( k = 0; k < nb; ++k ) {
         stats[k].minimum = std::numeric_limits<T>::max();
         stats[k].maximum = std::numeric_limits<T>::min();
@@ -547,6 +546,7 @@ void Grid<T>::calculateStatistics ()
         count = 0;
         
         // compute min, max, mean, stdev
+        #pragma omp target teams distribute parallel for collapse(2)
         for ( i = 0; i < nr; ++i ){
             for ( j = 0; j < nc; ++j ){
                 idx = getIndex(i, j, k);
