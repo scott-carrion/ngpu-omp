@@ -102,8 +102,8 @@ Grid<T> skyview ( const Grid<T> & dem, int daz, double r )
 
     //#pragma omp parallel for private(count,flag,angle,k,kk,d,sum,a,sinAz,cosAz,Amax,ii,jj,z) shared(out) collapse(2)
     //#pragma omp parallel for collapse(2)
-    //#pragma omp target teams distribute parallel for shared(out, interval, dmax, deg2rad) collapse(2)
-    #pragma omp parallel for shared(out, interval, dmax, deg2rad) collapse(2)
+    //#pragma omp parallel for shared(out, interval, dmax, deg2rad) collapse(2)
+    #pragma omp target teams distribute parallel for shared(out, interval, dmax, deg2rad) collapse(2)
     for ( i = 0; i < dem.nrows(); ++i ) {
         for ( j = 0; j < dem.ncols(); ++j ) {
     
@@ -183,9 +183,9 @@ Grid<T> prominence ( const Grid<T> & dem, int daz, double r )
     Grid<T> out(dem, 1);
     
     int count = 0;
-    
-   //#pragma omp target teams distribute parallel for shared(out, interval, dmax, deg2rad) collapse(2)
-   #pragma omp parallel for shared(out, interval, dmax, deg2rad) collapse(2)
+   
+   //#pragma omp parallel for shared(out, interval, dmax, deg2rad) collapse(2) 
+   #pragma omp target teams distribute parallel for shared(out, interval, dmax, deg2rad) collapse(2)
     for ( i = 0; i < dem.nrows(); ++i ) {
         for ( j = 0; j < dem.ncols(); ++j ) {
             std::cout << "\rprominence " << (static_cast<double>(count++) / dem.size()) << "%        ";
