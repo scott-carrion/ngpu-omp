@@ -7,6 +7,8 @@
 #include <cmath>
 #include <vector>
 
+#include <omp.h>
+
 #include "Grid.h"
 #include "GridCell.h"
 
@@ -23,6 +25,8 @@ template <typename T>
 double bilinearInterpolate ( double i, double j,
     const std::vector<GridCell<T> > & v )
 {
+    // FIXME: THIS FUNCTION CAUSES MULTITHREADED CRASH
+    //std::cout << "thread " << omp_get_thread_num() << " starting bilinear interpolate" << std::endl;
     double xmin = v[0].j + 0.5;
     double xrng = v[3].j - v[0].j;
     double ymin = v[3].i + 0.5;
@@ -37,6 +41,8 @@ double bilinearInterpolate ( double i, double j,
     
     double c0 = 1.0 - y;
     double c1 = y;
+    
+    //std::cout << "thread " << omp_get_thread_num() << " ending bilinear interpolate" << std::endl;
     
     return B00 * a0 * c0
         + B10 * a1 * c0
@@ -87,6 +93,8 @@ std::vector<GridCell<T> > getNearest4 ( const Grid<T> & g, double i0,
 template <typename T>
 Grid<T> skyview ( const Grid<T> & dem, int daz, double r )
 {
+    double timer_start = omp_get_wtime();
+
     static const double pi = 4.0 * atan(1.0);
     static const double deg2rad = pi / 180.0;
     const double interval = static_cast<double>(daz) / 360.0;
@@ -100,13 +108,16 @@ Grid<T> skyview ( const Grid<T> & dem, int daz, double r )
     
     int count = 0;
 
-    //#pragma omp parallel for private(count,flag,angle,k,kk,d,sum,a,sinAz,cosAz,Amax,ii,jj,z) shared(out) collapse(2)
-    //#pragma omp parallel for collapse(2)
+    // (SIGSEGV) #pragma omp parallel for private(count,flag,angle,k,kk,d,sum,a,sinAz,cosAz,Amax,ii,jj,z) shared(out) collapse(2)
+    // (SIGSEGV) #pragma omp parallel for collapse(2)
     //#pragma omp parallel for shared(out, interval, dmax, deg2rad) collapse(2)
-    #pragma omp target teams distribute parallel for shared(out, interval, dmax, deg2rad) collapse(2)
+    //#pragma omp target teams distribute parallel for private(flag, i, j, k, kk, a, d, sinAz, cosAz, Amax, sum, cells) shared(count, out, interval, dmax, deg2rad) collapse(2)
+    #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     for ( i = 0; i < dem.nrows(); ++i ) {
         for ( j = 0; j < dem.ncols(); ++j ) {
-    
+	    //std::cout << "skyview num threads: " << omp_get_num_threads() << std::endl;
+	    
+
             std::cout << "\rskyview " << (static_cast<double>(count++) / dem.size()) << "%        ";
             
             k = dem.getIndex(i, j);
@@ -119,8 +130,8 @@ Grid<T> skyview ( const Grid<T> & dem, int daz, double r )
                 
                 // find maximum angle from horizontal
                 Amax = 0.0;
-		//#pragma omp parallel for
-                for ( d = 1; d <= dmax; ++d ) {
+                
+		for ( d = 1; d <= dmax; ++d ) {
                     // get coordinates at point
                     ii = (i+0.5) - d * cosAz;
                     jj = (j+0.5) + d * sinAz;
@@ -134,15 +145,17 @@ Grid<T> skyview ( const Grid<T> & dem, int daz, double r )
                     cells = getNearest4(dem, ii, jj);
                     
 		for ( kk = 0; !flag && kk < cells.size(); ++kk ){
-                        if ( cells[kk].value == dem.noData() )
+                        if ( cells[kk].value == dem.noData() ) {
                             flag = true;
+			}
                     }
                     if ( flag ) {
                         angle = 0.0;
                         continue;
                     }
+
                     z = bilinearInterpolate(ii, jj, cells);
-                    
+
                     // track maximum angle from horizontal
                     angle = atan((z - dem[k]) / (d * dem.dx()));
                     if ( angle > Amax ) Amax = angle;
@@ -155,7 +168,9 @@ Grid<T> skyview ( const Grid<T> & dem, int daz, double r )
         }
     }
     std::cout << "\rskyview " << (static_cast<double>(count++) / dem.size()) << "%\n";
-    
+ 
+    double timer_end = omp_get_wtime();
+    std::cout << "Skyview took this many seconds: " << timer_end - timer_start << std::endl;
     return out;
 }
 
@@ -171,6 +186,8 @@ Grid<T> skyview ( const Grid<T> & dem, int daz, double r )
 template <typename T>
 Grid<T> prominence ( const Grid<T> & dem, int daz, double r )
 {
+    double timer_start = omp_get_wtime();
+
     static const double pi = 4.0 * atan(1.0);
     static const double deg2rad = pi / 180.0;
     const double interval = static_cast<double>(daz) / 360.0;
@@ -185,10 +202,13 @@ Grid<T> prominence ( const Grid<T> & dem, int daz, double r )
     int count = 0;
    
    //#pragma omp parallel for shared(out, interval, dmax, deg2rad) collapse(2) 
-   #pragma omp target teams distribute parallel for shared(out, interval, dmax, deg2rad) collapse(2)
+    //#pragma omp target teams distribute parallel for shared(out, interval, dmax, deg2rad) collapse(2)
+    //#pragma omp target teams distribute parallel for private(flag, i, j, k, kk, a, d, sinAz, cosAz, Amax, sum, cells) shared(count, out, interval, dmax, deg2rad) collapse(2)
+    //#pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z, out) shared(interval, dmax, deg2rad) collapse(2)
+    #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     for ( i = 0; i < dem.nrows(); ++i ) {
         for ( j = 0; j < dem.ncols(); ++j ) {
-            std::cout << "\rprominence " << (static_cast<double>(count++) / dem.size()) << "%        ";
+	    std::cout << "\rprominence " << (static_cast<double>(count++) / dem.size()) << "%        ";
             
             k = dem.getIndex(i, j);
             
@@ -237,7 +257,10 @@ Grid<T> prominence ( const Grid<T> & dem, int daz, double r )
         }
     }
     std::cout << "\rprominence " << (static_cast<double>(count++) / dem.size()) << "%\n";
-    
+   
+    double timer_end = omp_get_wtime();
+    std::cout << "Prominence took this many seconds: " << timer_end - timer_start << std::endl;
+ 
     return out;
 }
 

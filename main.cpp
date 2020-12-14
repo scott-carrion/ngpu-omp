@@ -23,6 +23,8 @@ void pick_k(const std::string& grid, const std::string& target, int k = 100, int
 
 int main (int argc, char** argv)
 {
+    omp_set_num_threads(16);
+    
     std::string input = "NangaSRTMv3.dat";
     std::string skyview_output = "skyview.dat";
     std::string skyview_sample_output = "skyview_sample.txt";
