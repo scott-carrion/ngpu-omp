@@ -32,7 +32,8 @@ class Grid_tc {
         int         nb;                     // number bands
         int         sz;                     // number cells per band
         int         vol;                    // total number cells
-        std::string * bandNames;            // names of each band
+        //std::string * bandNames;            // names of each band
+        char**       bandNames;		    // XXX names of each band, using char* so it's trivially copyable
         int         cw;                     // collar width of noData
         
         // data
@@ -43,7 +44,9 @@ class Grid_tc {
         
         // geographic data
         MapInfo_tc     mapInfo;                // geographic information
-        std::string coordinateSys;          // coordinate system details
+
+        //std::string coordinateSys;  // coordinate system details
+        char* coordinateSys;          // coordinate system details
         
         // helpers
         unsigned char checkInterleave(
@@ -52,15 +55,15 @@ class Grid_tc {
     public:
         // constructors
         Grid_tc(int r=1, int c=1, int b=1);    // default
-        Grid_tc(const Grid_tc<T> &);              // copy
-        Grid_tc(const Grid_tc<T> &, int);         // copy all but data
+        //Grid_tc(const Grid_tc<T> &);              // copy  XXX COPY CONSTRUCTOR NOT ALLOWED, THIS HAS TO BE TRIVIALLY COPYABLE!
+        Grid_tc(const Grid_tc<T> &, int);         // copy all but data  XXX NOT ALLOWED, THIS HAS TO BE TRIVIALLY COPYABLE!
         
         //destructor
-        ~Grid_tc();
+        //~Grid_tc();  // XXX DESTRUCTOR NOT ALLOWED, THIS HAS TO BE TRIVIALLY COPYABLE!
         
-        // operators
-        Grid_tc<T> &   operator=(              // assignment
-                      const Grid_tc<T> &);
+        // operators   XXX COPY ASSIGNMENT NOT ALLOWED, THIS HAS TO BE TRIVIALLY COPYABLE!
+        //Grid_tc<T> &   operator=(              // assignment
+        //              const Grid_tc<T> &);
         T &         operator[](int);        // element access
         T           operator[](int) const;  // element access
         
@@ -141,6 +144,7 @@ Grid_tc<T>::Grid_tc ( int c, int r, int b )
 : nr(r), nc(c), nb(b), sz(r*c), vol(r*c*b), ilv(INTERLEAVE_BSQ),
     nul(-1), cw(0)
 {
+
     int i;
     std::stringstream ss;
     
@@ -152,22 +156,29 @@ Grid_tc<T>::Grid_tc ( int c, int r, int b )
 
     for ( i = 0; i < vol; i++ ) { data[i] = nul; }
     stats = new GridStats[nb];
-    
+
+    if (coordinateSys == nullptr) { coordinateSys = new char[10000]; } // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+
     // set default band names
-    bandNames = new std::string[nb];
+    //bandNames = new std::string[nb];
+    bandNames = new char*[nb];
+    for (int j = 0; j < nb; j++) { bandNames[j] = new char[10000]; }  // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
 
     std::stringstream* ss_ptr = &ss;
 
     for ( i = 0; i < nb; i++ ) {
         ss.str(std::string());      // clear stringstream
         ss << "Band " << i + 1;
-        bandNames[i] = ss.str();
-        ss_ptr->str(std::string());
-	ss_ptr->operator<<("Band ").operator<<(i + 1);
-	bandNames[i] = ss_ptr->str();
+        //bandNames[i] = ss.str();
+        strcpy(bandNames[i], ss.str().c_str());  // XXX using strcpy() instead of std::string interface for copy triviality
+        //ss_ptr->str(std::string());
+	//ss_ptr->operator<<("Band ").operator<<(i + 1);  // XXX FIXME I JUST COMMENTED OUT THIS STUFF FOR NOW, I DON'T SEE THE POINT OF IT. IT CAUSES A BAD free() SOMEWHERE I THINK!
+	//bandNames[i] = ss_ptr->str();
+	//strcpy(bandNames[i+1], ss_ptr->str().c_str());  // XXX using strcpy() instread of std::string interface for copy triviality
     }
-}
 
+}
+/*
 // Copy constructor.
 template <typename T>
 Grid_tc<T>::Grid_tc ( const Grid_tc<T> & g )
@@ -193,7 +204,7 @@ Grid_tc<T>::Grid_tc ( const Grid_tc<T> & g )
     mapInfo = MapInfo_tc(g.mapInfo);
     coordinateSys = std::string(g.coordinateSys);
 }
-
+*/
 // Semi-copy constructors; copies geography and dimensions, but
 // not data.
 template <typename T>
@@ -210,20 +221,27 @@ Grid_tc<T>::Grid_tc ( const Grid_tc<T> & g, int k )
     for ( i = 0; i < vol; i++ ) { data[i] = nul; }
     stats = new GridStats[nb];
     
+    if (coordinateSys == nullptr) { coordinateSys = new char[10000]; } // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+    
     // set default band names
-    bandNames = new std::string[nb];
+    //bandNames = new std::string[nb];
+    bandNames = new char*[nb];
+    
+    for (int j = 0; j < nb; j++) { bandNames[j] = new char[10000]; }  // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
 
     for ( i = 0; i < nb; i++ ){
         ss.str(std::string());      // clear stringstream
         ss << "Band " << i + 1;
-        bandNames[i] = ss.str();
+        //bandNames[i] = ss.str();
+        strcpy(bandNames[i], ss.str().c_str());
     }
     
     // set geography
     mapInfo = MapInfo_tc(g.mapInfo);
-    coordinateSys = std::string(g.coordinateSys);
+    //coordinateSys = std::string(g.coordinateSys);
+    strcpy(coordinateSys, g.coordinateSys);  // XXX using strcpy() instead of std::string as before FIXME Happening here... no coordinateSys valid location
 }
-
+/*
 // Destructor.
 template <typename T>
 Grid_tc<T>::~Grid_tc ()
@@ -272,7 +290,7 @@ Grid_tc<T> & Grid_tc<T>::operator= ( const Grid_tc<T> & g )
     
     return *this;
 }
-
+*/
 template <typename T>
 T & Grid_tc<T>::operator[] ( int idx )
 { return data[idx]; }
@@ -354,11 +372,11 @@ template <typename T> MapInfo_tc Grid_tc<T>::get_mapInfo () const
 { return mapInfo; }
 
 template <typename T> std::string Grid_tc<T>::get_coordinateSys () const
-{ return coordinateSys.c_str(); }
+{ return std::string(coordinateSys); }
 
 template <typename T> std::string Grid_tc<T>::get_bandName ( int band )
     const
-{ return bandNames[band].c_str(); }
+{ return std::string(bandNames[band]); }
 
 template <typename T> int Grid_tc<T>::get_collarWidth () const
 { return cw; }
@@ -412,7 +430,8 @@ template <typename T>
 void Grid_tc<T>::clearGeography ()
 {
     mapInfo = MapInfo_tc();
-    coordinateSys = std::string();
+    //coordinateSys = std::string();
+    strcpy(coordinateSys, "");  // XXX As before, using strcpy() instead
 }
 
 template <typename T>
@@ -420,7 +439,9 @@ void Grid_tc<T>::setGeography ( const std::string & info,
     const std::string & sys)
 {
     mapInfo = MapInfo_tc(info);
-    coordinateSys = std::string(sys);
+    //coordinateSys = std::string(sys);
+    coordinateSys = new char[sys.length()+1];
+    strcpy(coordinateSys, sys.c_str());  // XXX As before, using strcpy() instead
 }
 
 template <typename T>
@@ -440,12 +461,14 @@ void Grid_tc<T>::set_nbands(int n)
     
     // replace band name array with new number of bands
     delete bandNames;
-    bandNames = new std::string[nb];
+    //bandNames = new std::string[nb];
+    bandNames = new char*[nb];  // XXX use char* instead for copy triviality
 
     for (int i = 0; i < nb; i++){
         ss.str(std::string()); // clear stringstream;
         ss << "Band " << i + 1;
-        bandNames[i] = ss.str();
+        //bandNames[i] = ss.str();
+        strcpy(bandNames[i], ss.str().c_str());
     }
 }
 
@@ -457,7 +480,7 @@ template <typename T> void Grid_tc<T>::set_dy(double v){ mapInfo.dy = v; }
 template <typename T>
 void Grid_tc<T>::set_bandName ( int k, const std::string & name )
 {
-    if ( k >= 0 && k < nb ) bandNames[k] = name.c_str();
+    if ( k >= 0 && k < nb ) { strcpy(bandNames[k], name.c_str()); }
 }
 
 // change the noData value - does not change any of the data in the grid.

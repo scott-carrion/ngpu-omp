@@ -12,6 +12,8 @@
 #include <set>      // std::set
 #include <vector>   // std::vector
 
+#include <unistd.h>  // sleep(); XXX we probably won't need this, remove later!
+
 #include "Grid_tc.h"
 
 // HELPER FUNCTIONS ///////////////////////////////////////////////////////////
@@ -190,7 +192,9 @@ Grid_tc<float> loadGrid (const std::string & fn)
     }
     
     // create grid object
-    Grid_tc<float> grid = Grid_tc<float>(info.ncolumns, info.nlines, info.ngrids);
+    //Grid_tc<float> grid = Grid_tc<float>(info.ncolumns, info.nlines, info.ngrids);
+    Grid_tc<float> grid(info.ncolumns, info.nlines, info.ngrids);
+
     grid.set_noData(info.nodata);
     grid.set_interleave(info.interleave);
     

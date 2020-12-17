@@ -18,6 +18,7 @@
 #include "GridOps_tc.h"
 #include "MapInfo_tc.h"
 
+
 void pick_k(const std::string& grid, const std::string& target, int k = 100, int start = 0)
 {
 	Grid_tc<float> dem = loadGrid(grid);
@@ -39,6 +40,7 @@ int main(int argc, char** argv)
 	return 0;
 }
 */
+
 
 int main (int argc, char** argv)
 {

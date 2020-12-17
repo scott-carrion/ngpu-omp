@@ -41,8 +41,8 @@ OBJS = $(addsuffix .o, $(basename $(addprefix $(BUILD_DIR)/, $(notdir $(SOURCES)
 UNAME_S := $(shell uname -s)
 
 # Compiler flags and libraries to link go here
-#CXXFLAGS = -g -std=c++11 -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda
-CXXFLAGS = -g -std=c++11 -fopenmp
+CXXFLAGS = -g -std=c++11 -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda
+#CXXFLAGS = -g -std=c++11 -fopenmp
 LIBS =
 
 ####################################################################################
