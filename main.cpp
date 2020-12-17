@@ -4,8 +4,8 @@
 // Written by Scott Carrion
 // DO NOT DISTRIBUTE WITHOUT PERMISSION!!
 
-#include "GridIO.h"
-#include "GridOps.h"
+//#include "GridIO.h"
+//#include "GridOps.h"
 #include <cstdio>
 #include <omp.h>
 #include <string>
@@ -13,11 +13,14 @@
 // XXX temp XXX
 #include <type_traits>
 #include <iostream>
-#include "Grid.h"
+#include "Grid_tc.h"
+#include "GridIO_tc.h"
+#include "GridOps_tc.h"
+#include "MapInfo_tc.h"
 
-pick_k(const std::string& grid, const std::string& target, int k = 100, int start = 0)
+void pick_k(const std::string& grid, const std::string& target, int k = 100, int start = 0)
 {
-	Grid<float> dem = loadGrid(grid);
+	Grid_tc<float> dem = loadGrid(grid);
 	std::ofstream writer(target, std::ios::out);
 	for (int i = start; i < start+k; ++i) {
 		writer << dem[i] << std::endl;
@@ -28,13 +31,15 @@ pick_k(const std::string& grid, const std::string& target, int k = 100, int star
 
 
 // Debug main for solving trivially copyable Grid ADT problem...
+/*
 int main(int argc, char** argv)
 {
-	std::cout << std::is_trivially_copyable<dummy_point>::value << " for specified type" << std::endl;
+	std::cout << std::is_trivially_copyable<MapInfo_tc>::value << " for MapInfo_tc" << std::endl;
+	std::cout << std::is_trivially_copyable<Grid_tc<float>>::value << " for Grid_tc<float>" << std::endl;
 	return 0;
 }
+*/
 
-/*
 int main (int argc, char** argv)
 {
     omp_set_num_threads(16);
@@ -55,10 +60,10 @@ int main (int argc, char** argv)
     }
 
     // Make Grid of floats out of input file, NangaSRTMv3.dat
-    Grid<float> dem = loadGrid(input);
+    Grid_tc<float> dem = loadGrid(input);
  
     // Set output Grid using skyview function   
-    Grid<float> out = skyview(dem, 1, 999999999);
+    Grid_tc<float> out = skyview(dem, 1, 999999999);
     saveGrid(out, skyview_output);  // Save the grid to skyview.dat
     
     // Set output Grid using prominence function
@@ -71,4 +76,4 @@ int main (int argc, char** argv)
    
    return 0;
 }
-*/
+

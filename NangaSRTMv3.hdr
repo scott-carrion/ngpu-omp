@@ -1,6 +1,6 @@
 ENVI
-samples = 100
-lines   = 100
+samples = 2000
+lines   = 2000
 bands   = 1
 offset = 0
 xstart = 980

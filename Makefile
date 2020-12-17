@@ -10,8 +10,8 @@
 
 
 # Compiler Selection
-CXX = g++
-#CXX = clang++
+#CXX = g++
+CXX = clang++
 
 # Build directory selection (do not include / character)
 BUILD_DIR = build
