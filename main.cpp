@@ -10,7 +10,12 @@
 #include <omp.h>
 #include <string>
 
-void pick_k(const std::string& grid, const std::string& target, int k = 100, int start = 0)
+// XXX temp XXX
+#include <type_traits>
+#include <iostream>
+#include "Grid.h"
+
+pick_k(const std::string& grid, const std::string& target, int k = 100, int start = 0)
 {
 	Grid<float> dem = loadGrid(grid);
 	std::ofstream writer(target, std::ios::out);
@@ -21,6 +26,15 @@ void pick_k(const std::string& grid, const std::string& target, int k = 100, int
 	writer.close();
 }
 
+
+// Debug main for solving trivially copyable Grid ADT problem...
+int main(int argc, char** argv)
+{
+	std::cout << std::is_trivially_copyable<dummy_point>::value << " for specified type" << std::endl;
+	return 0;
+}
+
+/*
 int main (int argc, char** argv)
 {
     omp_set_num_threads(16);
@@ -57,3 +71,4 @@ int main (int argc, char** argv)
    
    return 0;
 }
+*/

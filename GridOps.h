@@ -25,8 +25,6 @@ template <typename T>
 double bilinearInterpolate ( double i, double j,
     const std::vector<GridCell<T> > & v )
 {
-    // FIXME: THIS FUNCTION CAUSES MULTITHREADED CRASH
-    //std::cout << "thread " << omp_get_thread_num() << " starting bilinear interpolate" << std::endl;
     double xmin = v[0].j + 0.5;
     double xrng = v[3].j - v[0].j;
     double ymin = v[3].i + 0.5;
@@ -41,8 +39,6 @@ double bilinearInterpolate ( double i, double j,
     
     double c0 = 1.0 - y;
     double c1 = y;
-    
-    //std::cout << "thread " << omp_get_thread_num() << " ending bilinear interpolate" << std::endl;
     
     return B00 * a0 * c0
         + B10 * a1 * c0
@@ -108,15 +104,11 @@ Grid<T> skyview ( const Grid<T> & dem, int daz, double r )
     
     int count = 0;
 
-    // (SIGSEGV) #pragma omp parallel for private(count,flag,angle,k,kk,d,sum,a,sinAz,cosAz,Amax,ii,jj,z) shared(out) collapse(2)
-    // (SIGSEGV) #pragma omp parallel for collapse(2)
-    //#pragma omp parallel for shared(out, interval, dmax, deg2rad) collapse(2)
-    //#pragma omp target teams distribute parallel for private(flag, i, j, k, kk, a, d, sinAz, cosAz, Amax, sum, cells) shared(count, out, interval, dmax, deg2rad) collapse(2)
-    #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
+    // CPU: #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
+    // GPU: #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
+    //#pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     for ( i = 0; i < dem.nrows(); ++i ) {
         for ( j = 0; j < dem.ncols(); ++j ) {
-	    //std::cout << "skyview num threads: " << omp_get_num_threads() << std::endl;
-	    
 
             std::cout << "\rskyview " << (static_cast<double>(count++) / dem.size()) << "%        ";
             
@@ -201,11 +193,9 @@ Grid<T> prominence ( const Grid<T> & dem, int daz, double r )
     
     int count = 0;
    
-   //#pragma omp parallel for shared(out, interval, dmax, deg2rad) collapse(2) 
-    //#pragma omp target teams distribute parallel for shared(out, interval, dmax, deg2rad) collapse(2)
-    //#pragma omp target teams distribute parallel for private(flag, i, j, k, kk, a, d, sinAz, cosAz, Amax, sum, cells) shared(count, out, interval, dmax, deg2rad) collapse(2)
-    //#pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z, out) shared(interval, dmax, deg2rad) collapse(2)
-    #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
+    // CPU: #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
+    // GPU: #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
+    //#pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     for ( i = 0; i < dem.nrows(); ++i ) {
         for ( j = 0; j < dem.ncols(); ++j ) {
 	    std::cout << "\rprominence " << (static_cast<double>(count++) / dem.size()) << "%        ";
