@@ -12,6 +12,7 @@
 # Compiler Selection
 #CXX = g++
 CXX = clang++
+#CXX = /scratch/user/scott.carrion/clang-offloading/install/bin/clang++
 
 # Build directory selection (do not include / character)
 BUILD_DIR = build
@@ -41,8 +42,9 @@ OBJS = $(addsuffix .o, $(basename $(addprefix $(BUILD_DIR)/, $(notdir $(SOURCES)
 UNAME_S := $(shell uname -s)
 
 # Compiler flags and libraries to link go here
-CXXFLAGS = -g -std=c++11 -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda
-#CXXFLAGS = -g -std=c++11 -fopenmp
+#CXXFLAGS = -v -Wall -g -std=c++11 -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda
+CXXFLAGS = -g -std=c++11 -fopenmp
+#LIBS = -L/usr/lib64 -lcuda -lcudart
 LIBS =
 
 ####################################################################################
@@ -62,7 +64,7 @@ endif
 
 # General build rules
 
-$(BUILD_DIR)/%.o:%.cpp  # This assumes bulk of source files are in src/ folder
+$(BUILD_DIR)/%.o:%.cpp
 	mkdir -p $(@D)
 	@echo Compiling .cpp file
 	$(CXX) $(CXXFLAGS) -c -o $@ $<

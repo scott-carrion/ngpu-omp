@@ -18,6 +18,8 @@
 #include "GridOps_tc.h"
 #include "MapInfo_tc.h"
 
+// XXX final temp XXX
+
 
 void pick_k(const std::string& grid, const std::string& target, int k = 100, int start = 0)
 {
@@ -35,8 +37,8 @@ void pick_k(const std::string& grid, const std::string& target, int k = 100, int
 /*
 int main(int argc, char** argv)
 {
-	std::cout << std::is_trivially_copyable<MapInfo_tc>::value << " for MapInfo_tc" << std::endl;
-	std::cout << std::is_trivially_copyable<Grid_tc<float>>::value << " for Grid_tc<float>" << std::endl;
+	std::cout << std::is_trivial<MapInfo_tc>::value << " for MapInfo_tc" << std::endl;
+	std::cout << std::is_trivial<Grid_tc<float>>::value << " for Grid_tc<float>" << std::endl;
 	return 0;
 }
 */
@@ -78,4 +80,3 @@ int main (int argc, char** argv)
    
    return 0;
 }
-

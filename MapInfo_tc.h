@@ -64,8 +64,8 @@ public:
     double      dy;             // cell size in y direction
     
     // constructors
-    MapInfo_tc();
-    MapInfo_tc(std::string);       // parse as component of ENVI header file
+    //MapInfo_tc();  // XXX not allowed for trivial
+    //MapInfo_tc(std::string);       // parse as component of ENVI header file
     // MapInfo_tc(const MapInfo_tc &);  // XXX trivial copy constructor required!
     
     // destructor
@@ -81,14 +81,13 @@ public:
     
     // I/O
     std::string asString() const;
-
 };
 
 // CONSTRUCTORS / DESTRUCTOR //////////////////////////////////////////////////
-
+/*
 MapInfo_tc::MapInfo_tc(){ clear(); }
 MapInfo_tc::MapInfo_tc( std::string s ){ parseENVI( s ); }
-
+*/
 /*
 MapInfo_tc::MapInfo_tc( const MapInfo_tc & mi ) {
     projectionName  = std::string(mi.projectionName);
@@ -124,6 +123,7 @@ MapInfo_tc & MapInfo_tc::operator= ( const MapInfo_tc & mi ) {
 }
 */
 // OPERATIONS /////////////////////////////////////////////////////////////////
+
 void MapInfo_tc::clear(){
     //projectionName  = "undefined";
     projectionZone  = 0;

@@ -11,15 +11,15 @@
 #include "MapInfo_tc.h"
 
 template <typename T>
-class Grid_tc {
-    public:
+struct Grid_tc {
+    //public:
         typedef struct {
             T minimum;
             T maximum;
             double mean;
             double stdev;
         } GridStats;
-    private:
+    //private:
         // constants
         static const unsigned char INTERLEAVE_NUL = 0;
         static const unsigned char INTERLEAVE_BSQ = 1;
@@ -52,11 +52,11 @@ class Grid_tc {
         unsigned char checkInterleave(
             const std::string & ) const;
         
-    public:
+    //public:
         // constructors
-        Grid_tc(int r=1, int c=1, int b=1);    // default
+        //Grid_tc(int r=1, int c=1, int b=1);    // default
         //Grid_tc(const Grid_tc<T> &);              // copy  XXX COPY CONSTRUCTOR NOT ALLOWED, THIS HAS TO BE TRIVIALLY COPYABLE!
-        Grid_tc(const Grid_tc<T> &, int);         // copy all but data  XXX NOT ALLOWED, THIS HAS TO BE TRIVIALLY COPYABLE!
+        //Grid_tc(const Grid_tc<T> &, int);         // copy all but data  XXX NOT ALLOWED, THIS HAS TO BE TRIVIALLY COPYABLE!
         
         //destructor
         //~Grid_tc();  // XXX DESTRUCTOR NOT ALLOWED, THIS HAS TO BE TRIVIALLY COPYABLE!
@@ -137,7 +137,7 @@ class Grid_tc {
 };
 
 // CONSTRUCTORS / DESTRUCTOR ////////////////////////////////////////
-
+/*
 // Default constructor.
 template <typename T>
 Grid_tc<T>::Grid_tc ( int c, int r, int b )
@@ -178,6 +178,7 @@ Grid_tc<T>::Grid_tc ( int c, int r, int b )
     }
 
 }
+*/
 /*
 // Copy constructor.
 template <typename T>
@@ -207,6 +208,7 @@ Grid_tc<T>::Grid_tc ( const Grid_tc<T> & g )
 */
 // Semi-copy constructors; copies geography and dimensions, but
 // not data.
+/*
 template <typename T>
 Grid_tc<T>::Grid_tc ( const Grid_tc<T> & g, int k )
 : nr(g.nr), nc(g.nc), nb(g.nb), sz(g.sz), vol(g.vol), ilv(g.ilv),
@@ -241,6 +243,7 @@ Grid_tc<T>::Grid_tc ( const Grid_tc<T> & g, int k )
     //coordinateSys = std::string(g.coordinateSys);
     strcpy(coordinateSys, g.coordinateSys);  // XXX using strcpy() instead of std::string as before FIXME Happening here... no coordinateSys valid location
 }
+*/
 /*
 // Destructor.
 template <typename T>
@@ -291,6 +294,7 @@ Grid_tc<T> & Grid_tc<T>::operator= ( const Grid_tc<T> & g )
     return *this;
 }
 */
+
 template <typename T>
 T & Grid_tc<T>::operator[] ( int idx )
 { return data[idx]; }
@@ -438,7 +442,13 @@ template <typename T>
 void Grid_tc<T>::setGeography ( const std::string & info,
     const std::string & sys)
 {
-    mapInfo = MapInfo_tc(info);
+    // Basically doing the parameterized constructor's job here, since it isn't
+    // allowed in order to be a trivial type
+    mapInfo = MapInfo_tc(); mapInfo.parseENVI(info);
+
+
+
+
     //coordinateSys = std::string(sys);
     coordinateSys = new char[sys.length()+1];
     strcpy(coordinateSys, sys.c_str());  // XXX As before, using strcpy() instead
@@ -447,7 +457,7 @@ void Grid_tc<T>::setGeography ( const std::string & info,
 template <typename T>
 void Grid_tc<T>::set_nbands(int n)
 {
-    int               i;  // iterator
+    //int               i;  // iterator
     std::stringstream ss;
     
     // adjust dimensions

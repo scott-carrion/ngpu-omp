@@ -100,17 +100,62 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
     int i, j, k, kk, a, d;
     double ii, jj, z, cosAz, sinAz, angle, Amax, sum;
     std::vector<GridCell<T> > cells;
-    Grid_tc<T> out(dem, 1);
+    // Grid_tc<T> out(dem, 1);
+    Grid_tc<T> out;
+    // XXX pasting in the copy constructor to keep this type trivial
+
+    /* BEGIN PASTED SEMI COPY CONSTRUCTOR */
+    out.nr = dem.nr;
+    out.nc = dem.nc;
+    out.nb = dem.nb;
+    out.sz = dem.sz;
+    out.vol = dem.vol;
+    out.ilv = dem.ilv;
+    out.nul = dem.nul;
+    out.cw = 0;
+
+    int it;
+    std::stringstream ss;
+    
+    // initialize array to noData
+    out.data = new T[out.vol];
+
+    for ( it = 0; it < out.vol; it++ ) { out.data[it] = out.nul; }
+    out.stats = new typename Grid_tc<T>::GridStats[out.nb];
+    
+    if (out.coordinateSys == nullptr) { out.coordinateSys = new char[10000]; } // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+    
+    // set default band names
+    //bandNames = new std::string[nb];
+    out.bandNames = new char*[out.nb];
+    
+    for (int j = 0; j < out.nb; j++) { out.bandNames[j] = new char[10000]; }  // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+
+    for ( it = 0; it < out.nb; it++ ){
+        ss.str(std::string());      // clear stringstream
+        ss << "Band " << i + 1;
+        //bandNames[i] = ss.str();
+        strcpy(out.bandNames[it], ss.str().c_str());
+    }
+    
+    // set geography
+    //mapInfo = MapInfo_tc(g.mapInfo);
+    out.mapInfo = MapInfo_tc(dem.mapInfo);  // XXX this might fail...
+
+
+    //coordinateSys = std::string(g.coordinateSys);
+    strcpy(out.coordinateSys, dem.coordinateSys);  // XXX using strcpy() instead of std::string as before FIXME Happening here... no coordinateSys valid location
+    /* END PASTED SEMI COPY CONSTRUCTOR */
     
     int count = 0;
 
     // CPU: #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     // GPU: #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
-    #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
+    #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     for ( i = 0; i < dem.nrows(); ++i ) {
         for ( j = 0; j < dem.ncols(); ++j ) {
 
-            //std::cout << "\rskyview " << (static_cast<double>(count++) / dem.size()) << "%        ";
+            std::cout << "\rskyview " << (static_cast<double>(count++) / dem.size()) << "%        ";
             
             k = dem.getIndex(i, j);
             
@@ -189,16 +234,61 @@ Grid_tc<T> prominence ( const Grid_tc<T> & dem, int daz, double r )
     int i, j, k, kk, a, d;
     double ii, jj, z, cosAz, sinAz, angle, Amax, sum;
     std::vector<GridCell<T> > cells;
-    Grid_tc<T> out(dem, 1);
+    //Grid_tc<T> out(dem, 1);
+    Grid_tc<T> out;
+    // XXX pasting in the copy constructor to keep this type trivial
+
+    /* BEGIN PASTED SEMI COPY CONSTRUCTOR */
+    out.nr = dem.nr;
+    out.nc = dem.nc;
+    out.nb = dem.nb;
+    out.sz = dem.sz;
+    out.vol = dem.vol;
+    out.ilv = dem.ilv;
+    out.nul = dem.nul;
+    out.cw = 0;
+
+    int it;
+    std::stringstream ss;
+    
+    // initialize array to noData
+    out.data = new T[out.vol];
+
+    for ( it = 0; it < out.vol; it++ ) { out.data[it] = out.nul; }
+    out.stats = new typename Grid_tc<T>::GridStats[out.nb];
+    
+    if (out.coordinateSys == nullptr) { out.coordinateSys = new char[10000]; } // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+    
+    // set default band names
+    //bandNames = new std::string[nb];
+    out.bandNames = new char*[out.nb];
+    
+    for (int j = 0; j < out.nb; j++) { out.bandNames[j] = new char[10000]; }  // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+
+    for ( it = 0; it < out.nb; it++ ){
+        ss.str(std::string());      // clear stringstream
+        ss << "Band " << i + 1;
+        //bandNames[i] = ss.str();
+        strcpy(out.bandNames[it], ss.str().c_str());
+    }
+    
+    // set geography
+    //mapInfo = MapInfo_tc(g.mapInfo);
+    out.mapInfo = MapInfo_tc(dem.mapInfo);  // XXX this might fail...
+
+
+    //coordinateSys = std::string(g.coordinateSys);
+    strcpy(out.coordinateSys, dem.coordinateSys);  // XXX using strcpy() instead of std::string as before FIXME Happening here... no coordinateSys valid location
+    /* END PASTED SEMI COPY CONSTRUCTOR */
     
     int count = 0;
    
     // CPU: #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     // GPU: #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
-    #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
+    #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     for ( i = 0; i < dem.nrows(); ++i ) {
         for ( j = 0; j < dem.ncols(); ++j ) {
-	    //std::cout << "\rprominence " << (static_cast<double>(count++) / dem.size()) << "%        ";
+	    std::cout << "\rprominence " << (static_cast<double>(count++) / dem.size()) << "%        ";
             
             k = dem.getIndex(i, j);
             
