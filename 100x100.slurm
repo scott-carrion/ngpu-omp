@@ -12,9 +12,9 @@
 ####SBATCH --mail-user=scott.carrion@tamu.edu
 
 cd $HOME/NangaGPU_omp
-#ml GCC/6.4.0-2.28
-#ml CUDA/10.0.130
-#export PATH=$PATH:$SCRATCH/clang-offloading/install/bin
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SCRATCH/clang-offloading/install/lib
+ml GCC/6.4.0-2.28
+ml CUDA/10.0.130
+export PATH=$PATH:$SCRATCH/clang-offloading/install/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SCRATCH/clang-offloading/install/lib
 
 /usr/bin/time build/skyview_omp 100x100
