@@ -72,12 +72,12 @@ int main (int argc, char** argv)
     saveGrid(out, skyview_output);  // Save the grid to skyview.dat
     
     // Set output Grid using prominence function
-    //out = prominence(dem, 1, 999999999);
-    //saveGrid(out, prominence_output);  // Save the grid to prominence.dat
+    out = prominence(dem, 1, 999999999);
+    saveGrid(out, prominence_output);  // Save the grid to prominence.dat
     
    // Grab some samples of the uncompressed skyview and prominence grids for correctness analysis
    pick_k(skyview_output, skyview_sample_output);
-   //pick_k(prominence_output, prominence_sample_output);
+   pick_k(prominence_output, prominence_sample_output);
    
    return 0;
 }

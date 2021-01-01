@@ -354,7 +354,7 @@ Grid_tc<T> prominence ( const Grid_tc<T> & dem, int daz, double r )
     int i, j, k, kk, a, d;
     double ii, jj, z, cosAz, sinAz, angle, Amax, sum;
     //std::vector<GridCell<T> > cells;
-    GridCell<T>* cells;
+    //GridCell<T>* cells;
     //Grid_tc<T> out(dem, 1);
     Grid_tc<T> out;
     // XXX pasting in the copy constructor to keep this type trivial
@@ -403,16 +403,28 @@ Grid_tc<T> prominence ( const Grid_tc<T> & dem, int daz, double r )
     /* END PASTED SEMI COPY CONSTRUCTOR */
     
     int count = 0;
+    // hard-coded values from dem here
+    int nrows = dem.nrows(); int ncols = dem.ncols(); int nbands = dem.nbands();
+    double dem_dx = dem.dx(); T dem_no_data = dem.noData();
+    int dem_nb = dem.nb; int dem_nc = dem.nc;
+    int dem_ilv = dem.ilv;
    
     // CPU: #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     // GPU: #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
-    #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
-    for ( i = 0; i < dem.nrows(); ++i ) {
-        for ( j = 0; j < dem.ncols(); ++j ) {
+    #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(dem, interval, dmax, deg2rad, out, nrows, ncols) map(tofrom: out.data[0:out.get_volume()], dem.data[0:dem.get_volume()]) collapse(2)
+    for ( i = 0; i < nrows; ++i ) {
+        for ( j = 0; j < ncols; ++j ) {
+	    GridCell<T>* cells = (GridCell<T>*)(std::malloc(sizeof(GridCell<T>) * 4));  // XXX declaring cells here, since it's used internally only anyway
 	    //std::cout << "\rprominence " << (static_cast<double>(count++) / dem.size()) << "%        ";
-	    printf("\rprominence %f%%        \n", (static_cast<double>(count++) / dem.size()));
+	    //printf("\rprominence %f%%        \n", (static_cast<double>(count++) / dem.size()));
             
-            k = dem.getIndex(i, j);
+            //k = dem.getIndex(i, j);
+	    // Begin transposed getIndex function
+	    if ( dem_ilv == Grid_tc<T>::INTERLEAVE_BIP ) { k = dem_nb * (i*dem_nc + j); }
+	    if ( dem_ilv == Grid_tc<T>::INTERLEAVE_BIP ) { k = dem_nb * (i*dem_nc + j); }
+	    else if ( dem_ilv == Grid_tc<T>::INTERLEAVE_BIL ) { k = i*dem_nc*dem_nb + j; }
+	    else { k = i*dem_nc + j; } // assume bsq
+	    // end transposed getIndex function
             
             // scan in each direction
             sum = 0.0;
@@ -429,30 +441,30 @@ Grid_tc<T> prominence ( const Grid_tc<T> & dem, int daz, double r )
                     ii = (i+0.5) - d * cosAz;
                     jj = (j+0.5) + d * sinAz;
                     
-                    if ( ii < 0 || ii >= dem.nrows()
-                            || jj < 0 || jj >= dem.ncols() )
+                    if ( ii < 0 || ii >= nrows
+                            || jj < 0 || jj >= ncols )
                         break;
                     
 		    // interpolate value at point
                     flag = false;
-                    // cells = getNearest4_tc(dem, ii, jj);  XXX UPDATE ME WITH NEW SIGNATURE
+                    getNearest4_tc(dem, ii, jj, cells, nrows, ncols, nbands, false);  // XXX UPDATE ME WITH NEW SIGNATURE
 		    
 		    // In getNearest4_tc, cells is set to an array of size 4. It is always size 4, so use that instead of
 		    // what would normally be cells.size()
                     
 		    for ( kk = 0; !flag && kk < 4; ++kk ){
-                       if ( cells[kk].value == dem.noData() )
+                       if ( cells[kk].value == dem_no_data )
 				flag = true;
 		    }
                     if ( flag ) {
                         angle = 0.0;
                         continue;
                     }
-                    z = bilinearInterpolate_tc(ii, jj, cells);
+                    z = bilinearInterpolate_tc(ii, jj, cells, false);
                     
                     // track maximum angle from horizontal
-                    angle = atan((z - dem[k]) / (d * dem.dx()));
-                    if ( angle < Amax ) Amax = angle;
+                    angle = atan((z - dem[k]) / (d * dem_dx));
+                    if ( angle < Amax ) { Amax = angle; }
                 }
                 
                 Amax = sin(Amax);
@@ -462,7 +474,7 @@ Grid_tc<T> prominence ( const Grid_tc<T> & dem, int daz, double r )
         }
     }
     //std::cout << "\rprominence " << (static_cast<double>(count++) / dem.size()) << "%\n";
-    printf("\rprominence %f%%\n", (static_cast<double>(count++) / dem.size()));
+    //printf("\rprominence %f%%\n", (static_cast<double>(count++) / dem.size()));
    
     double timer_end = omp_get_wtime();
     std::cout << "Prominence took this many seconds: " << timer_end - timer_start << std::endl;
