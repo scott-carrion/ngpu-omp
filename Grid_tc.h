@@ -97,10 +97,10 @@ struct Grid_tc {
         // grid navigation
         int         getIndex(int, int, int) // index for row, col, band
                       const;
-        int         getIndex(int, int)
+        int         getIndex(int, int, int, int, int, bool)
                       const;
         T           getValue(int) const;    // get value at index
-        T           getValue(int, int)      // get value at row, col
+        T           getValue(int, int, int, int)      // get value at row, col
                       const;
         T           getValue(int, int, int) // value at row, col, band
                       const;
@@ -386,6 +386,7 @@ template <typename T> int Grid_tc<T>::get_collarWidth () const
 { return cw; }
 
 // fetch index for a given i (row), j (column), and k (band).
+/* XXX trying to simplify this to see if getIndex works as intended...
 template <typename T>
 int Grid_tc<T>::getIndex ( int i, int j, int k ) const
 {
@@ -396,12 +397,40 @@ int Grid_tc<T>::getIndex ( int i, int j, int k ) const
 }
 template <typename T> int Grid_tc<T>::getIndex(int i, int j) const
 { return getIndex(i, j, 0); }
+*/
+
+// XXX my simplified version
+template <typename T>
+int Grid_tc<T>::getIndex ( int i, int j, int nrows, int ncols, int nbands, bool debug_flag) const
+{
+    if (debug_flag) {
+	if (ilv == INTERLEAVE_BIP) { printf("ilv is INTERLEAVE_BIP. Returning %d * (%d*%d + %d)\n", nbands, i, ncols, j); return nbands * (i*ncols + j); }
+	else if (ilv == INTERLEAVE_BIL) { printf("ilv is INTERLEAVE_BIL. Returning %d*%d*%d + %d\n", i, ncols, nbands, j); return i*ncols*nbands + j; }
+	else { printf("Assuming ilv is INTERLEAVE_BSQ. Returning %d*%d + %d\n", i, nc, j); return i*ncols + j; }
+    }
+
+    else {
+        if ( ilv == INTERLEAVE_BIP ) return nbands * (i*ncols + j);
+        if ( ilv == INTERLEAVE_BIP ) return nbands * (i*ncols + j);
+        else if ( ilv == INTERLEAVE_BIL ) return i*ncols*nbands + j;
+        else return i*ncols + j; // assume bsq
+    }
+}
+
+template <typename T>
+int Grid_tc<T>::getIndex (int i, int j, int k) const  // TODO: THIS FUNCTION NOT UPDATED TO BE COMPATIBLE WITH GPU WEIRDNESS.
+{
+    if ( ilv == INTERLEAVE_BIP ) return nb * (i*nc + j) + k;
+    if ( ilv == INTERLEAVE_BIP ) return nb * (i*nc + j) + k;
+    else if ( ilv == INTERLEAVE_BIL ) return i*nc*nb + j;
+    else return k*sz + i*nc + j; // assume bsq
+}
 
 // fetch values given index (idx) or coordinates (row i, col j, band k)
 template <typename T> T Grid_tc<T>::getValue ( int idx ) const
 { return data[idx]; }
-template <typename T> T Grid_tc<T>::getValue ( int i, int j ) const
-{ return data[getIndex(i, j)]; }
+template <typename T> T Grid_tc<T>::getValue ( int i, int j, int nrows, int ncols) const
+{ return data[getIndex(i, j, nrows, ncols, 0, false)]; }
 template <typename T> T Grid_tc<T>::getValue ( int i, int j, int k ) const
 { return data[getIndex(i, j, k)]; }
 
