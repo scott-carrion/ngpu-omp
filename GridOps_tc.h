@@ -243,12 +243,10 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
     int dem_nb = dem.nb; int dem_nc = dem.nc;
     int dem_ilv = dem.ilv;
 
-    bool debug_flag = false;  // XXX using this to make certain functions i'm debugging print only once
-
     // (old) CPU: #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     // GPU: #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(dem, interval, dmax, deg2rad, out) map(tofrom: dem.data[0:dem.get_volume()]) collapse(2) 
     // (new) CPU #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2) 
-#pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(dem, interval, dmax, deg2rad, out, nrows, ncols) map(tofrom: out.data[0:out.get_volume()], dem.data[0:dem.get_volume()]) collapse(2)
+#pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(dem, interval, dmax, deg2rad, out, nrows, ncols) map(tofrom: out.data[0:out.get_volume()], dem.data[0:dem.get_volume()]) num_teams(8) thread_limit(64) collapse(2)
     //#pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     for ( i = 0; i < nrows; ++i ) {
         for ( j = 0; j < ncols; ++j ) { 
@@ -287,8 +285,7 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
 
                     // interpolate value at point
                     flag = false;
-                    if (k == 0 && !debug_flag) { getNearest4_tc(dem, ii, jj, cells, nrows, ncols, nbands, true); debug_flag = true; }
-		    else { getNearest4_tc(dem, ii, jj, cells, nrows, ncols, nbands, false); }
+		    getNearest4_tc(dem, ii, jj, cells, nrows, ncols, nbands, false);
 
 		// In getNearest4_tc, cells is set to an array of size 4. It is always size 4, so use that instead of
 		// what would normally be cells.size()
@@ -302,24 +299,15 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
                        continue;
                     }
 
-		    // FIXME: ERROR IN CORRECTNESS IN GPU VERSION CAUSED BY INCORRECT SET OF z
-                    if (k == 0 /*&& !debug_flag*/) { z = bilinearInterpolate_tc(ii, jj, cells, false); /*debug_flag = true;*/ }
-		    else { z = bilinearInterpolate_tc(ii, jj, cells, false); }
+		    z = bilinearInterpolate_tc(ii, jj, cells, false);
 
                     // track maximum angle from horizontal
                     angle = atan((z - dem[k]) / (d * dem_dx));
-                    if ( angle > Amax ) { Amax = angle; /* if (k == 0) { printf("New Amax set: Amax == atan((%f - %f) / (%d * %f))\n", z, dem[k], d, dem_dx); }*/ }
+                    if ( angle > Amax ) { Amax = angle; }
                 }
-		/* XXX my printf stuff for debugging setting of sum
-		if (k == 0) { printf("(k == 0) Amax, before setting it to its cosine, is %f\n", Amax); }
-                Amax = cos(Amax);
-                if (k == 0) { printf("sum before addition: %f; ", sum); sum += Amax * Amax; printf("sum after addition: %f\n", sum); }
-		else { sum += Amax * Amax; }
-		*/
 		Amax = cos(Amax);
 		sum += Amax * Amax;
             }
-	    if (k == 0) { printf("k == 0, so we are assigning out[%d] = %f * %f == %f\n", k, sum, interval, sum * interval); }
             out[k] = sum * interval;
         }
     }
@@ -411,7 +399,8 @@ Grid_tc<T> prominence ( const Grid_tc<T> & dem, int daz, double r )
    
     // CPU: #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     // GPU: #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
-    #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(dem, interval, dmax, deg2rad, out, nrows, ncols) map(tofrom: out.data[0:out.get_volume()], dem.data[0:dem.get_volume()]) collapse(2)
+    #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(dem, interval, dmax, deg2rad, out, nrows, ncols) map(tofrom: out.data[0:out.get_volume()], dem.data[0:dem.get_volume()]) num_teams(8) thread_limit(64) collapse(2)
+    //#pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     for ( i = 0; i < nrows; ++i ) {
         for ( j = 0; j < ncols; ++j ) {
 	    GridCell<T>* cells = (GridCell<T>*)(std::malloc(sizeof(GridCell<T>) * 4));  // XXX declaring cells here, since it's used internally only anyway

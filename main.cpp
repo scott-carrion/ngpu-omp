@@ -46,8 +46,8 @@ int main(int argc, char** argv)
 
 int main (int argc, char** argv)
 {
-    //omp_set_num_threads(16);
-    omp_set_num_threads(1);
+    omp_set_num_threads(512);
+    //omp_set_num_threads(1);
     
     std::string input = "NangaSRTMv3.dat";
     std::string skyview_output = "skyview.dat";

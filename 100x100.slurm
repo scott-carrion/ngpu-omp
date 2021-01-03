@@ -1,15 +1,15 @@
 #!/bin/bash
 #SBATCH --job-name=nanga-omp-100x100
 #SBATCH --ntasks=4
-#SBATCH --time=01:30:00
+#SBATCH --time=03:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --partition=gpu 
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem=8GB
 #SBATCH --output=nanga-omp-100x100.%j
 
-###SBATCH --mail-type=ALL
-####SBATCH --mail-user=scott.carrion@tamu.edu
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=scott.carrion@tamu.edu
 
 cd $HOME/NangaGPU_omp
 ml GCC/6.4.0-2.28
