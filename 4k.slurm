@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=nanga-omp-4k
 #SBATCH --ntasks=4
-#SBATCH --time=03:00:00
+#SBATCH --time=08:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --partition=gpu 
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem=8GB
-#SBATCH --output=nanga-omp-200x200.%j
+#SBATCH --output=nanga-omp-4000x4000.%j
 
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=scott.carrion@tamu.edu

@@ -240,7 +240,8 @@ Grid_tc<float> loadGrid (const std::string & fn)
     /* END PASTED CONSTRUCTOR FOR GRID */
 
     grid.set_noData(info.nodata);
-    grid.set_interleave(info.interleave);
+    const char* tmp_ptr_b = info.interleave.c_str();
+    grid.set_interleave(tmp_ptr_b);
     
     // set geographic information
     grid.setGeography(info.mapinfo, info.coordinatesys);
@@ -462,7 +463,8 @@ Grid_tc<float> loadBand (const std::string & fn, int k)
 
 
     grid.set_noData(info.nodata);
-    grid.set_interleave(info.interleave);
+    const char* tmp_ptr = info.interleave.c_str();  // XXX this might break
+    grid.set_interleave(tmp_ptr);
     
     // set geographic information
     grid.setGeography(info.mapinfo, info.coordinatesys);

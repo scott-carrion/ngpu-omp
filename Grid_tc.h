@@ -314,8 +314,7 @@ unsigned char Grid_tc<T>::checkInterleave ( const std::string & s )
     if ( s == "bsq" ) return INTERLEAVE_BSQ;
     if ( s == "bip" ) return INTERLEAVE_BIP;
     if ( s == "bil" ) return INTERLEAVE_BIL;
-    printf("WARNING: '%s' not recognized interleave format, assuming bsq\n",
-        s.c_str());
+    printf("WARNING: '%s' not recognized interleave format, assuming bsq\n", s.c_str());
     return INTERLEAVE_NUL;
 }
 

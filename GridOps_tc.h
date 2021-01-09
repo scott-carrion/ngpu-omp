@@ -246,11 +246,11 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
     // (old) CPU: #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     // GPU: #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(dem, interval, dmax, deg2rad, out) map(tofrom: dem.data[0:dem.get_volume()]) collapse(2) 
     // (new) CPU #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2) 
-#pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(dem, interval, dmax, deg2rad, out, nrows, ncols) map(tofrom: out.data[0:out.get_volume()], dem.data[0:dem.get_volume()]) num_teams(8) thread_limit(64) collapse(2)
+#pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(dem, interval, dmax, deg2rad, out, nrows, ncols) map(tofrom: out.data[0:out.get_volume()], dem.data[0:dem.get_volume()]) num_teams(128) thread_limit(128) collapse(2)
     //#pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     for ( i = 0; i < nrows; ++i ) {
         for ( j = 0; j < ncols; ++j ) { 
-	    GridCell<T>* cells = (GridCell<T>*)(std::malloc(sizeof(GridCell<T>) * 4));  // XXX declaring cells here, since it's used internally only anyway
+	    GridCell<T>* cells = (GridCell<T>*)(std::malloc(sizeof(GridCell<T>) * 4));  // XXX declaring cells here, since it's used internally only anyway; temporarily removing it to see if malloc is the issue
             //std::cout << "\rskyview " << (static_cast<double>(count++) / dem.size()) << "%        ";
             // Using printf() instead
 	    //printf("\rskyview %f%%        \n", (static_cast<double>(count++) / dem.size()));
@@ -285,12 +285,12 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
 
                     // interpolate value at point
                     flag = false;
-		    getNearest4_tc(dem, ii, jj, cells, nrows, ncols, nbands, false);
+		    getNearest4_tc(dem, ii, jj, cells, nrows, ncols, nbands, false);  // XXX trying to see if dynamic memory allocation is the problem...
 
 		// In getNearest4_tc, cells is set to an array of size 4. It is always size 4, so use that instead of
 		// what would normally be cells.size()
 		for ( kk = 0; !flag && kk < 4; ++kk ){
-                        if ( cells[kk].value == dem_no_data ) {
+                        if ( cells[kk].value == dem_no_data ) {  // XXX temporarily removing all references to cells to see if malloc is the problem...
                             flag = true;
 			}
                     } 
@@ -299,7 +299,7 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
                        continue;
                     }
 
-		    z = bilinearInterpolate_tc(ii, jj, cells, false);
+		    z = bilinearInterpolate_tc(ii, jj, cells, false);  // XXX trying to see if dynamic memory allocation is the problem...
 
                     // track maximum angle from horizontal
                     angle = atan((z - dem[k]) / (d * dem_dx));
@@ -309,6 +309,8 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
 		sum += Amax * Amax;
             }
             out[k] = sum * interval;
+	    if (k == 40000) { printf("Got to k == 40000!\n"); }
+	    std::free(cells);
         }
     }
     // std::cout << "\rskyview " << (static_cast<double>(count++) / dem.size()) << "%\n";
@@ -399,7 +401,7 @@ Grid_tc<T> prominence ( const Grid_tc<T> & dem, int daz, double r )
    
     // CPU: #pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     // GPU: #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, cells, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
-    #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(dem, interval, dmax, deg2rad, out, nrows, ncols) map(tofrom: out.data[0:out.get_volume()], dem.data[0:dem.get_volume()]) num_teams(8) thread_limit(64) collapse(2)
+    #pragma omp target teams distribute parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(dem, interval, dmax, deg2rad, out, nrows, ncols) map(tofrom: out.data[0:out.get_volume()], dem.data[0:dem.get_volume()]) num_teams(128) thread_limit(128) collapse(2)
     //#pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     for ( i = 0; i < nrows; ++i ) {
         for ( j = 0; j < ncols; ++j ) {
@@ -460,6 +462,7 @@ Grid_tc<T> prominence ( const Grid_tc<T> & dem, int daz, double r )
                 sum += Amax * Amax; 
             }
             out[k] = sum * interval;
+	    std::free(cells);
         }
     }
     //std::cout << "\rprominence " << (static_cast<double>(count++) / dem.size()) << "%\n";

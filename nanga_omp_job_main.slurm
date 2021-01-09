@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=nanga-omp
 #SBATCH --ntasks=4
-#SBATCH --time=03:00:00
+#SBATCH --time=08:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --partition=gpu 
 #SBATCH --ntasks-per-node=1
