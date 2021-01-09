@@ -43,7 +43,6 @@ UNAME_S := $(shell uname -s)
 
 # Compiler flags and libraries to link go here
 CXXFLAGS = -g -Wall -O3 -std=c++11 -Xopenmp-target -march=sm_37 -fopenmp -fopenmp-targets=nvptx64-nvidia-cuda
-#CXXFLAGS = -g -std=c++11 -fopenmp
 LIBS =
 
 ####################################################################################

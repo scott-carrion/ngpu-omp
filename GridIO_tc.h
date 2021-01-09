@@ -12,8 +12,6 @@
 #include <set>      // std::set
 #include <vector>   // std::vector
 
-#include <unistd.h>  // sleep(); XXX we probably won't need this, remove later!
-
 #include "Grid_tc.h"
 
 // HELPER FUNCTIONS ///////////////////////////////////////////////////////////
@@ -192,10 +190,10 @@ Grid_tc<float> loadGrid (const std::string & fn)
     }
     
     // create grid object
-    //Grid_tc<float> grid(info.ncolumns, info.nlines, info.ngrids);
-    // XXX Doing the parameterized constructor's job here, since it's not allowed in order to be trivial
+    // Doing the parameterized constructor's job here, since it's not allowed in order to be trivial
     Grid_tc<float> grid;
-    /* BEGIN PASTED CONSTRUCTOR FOR GRID */
+
+    /* BEGIN MANUAL PARAMETERIZED CONSTRUCTOR FOR GRID */
     grid.nr = info.nlines;
     grid.nc = info.ncolumns;
     grid.nb = info.ngrids;
@@ -218,26 +216,21 @@ Grid_tc<float> loadGrid (const std::string & fn)
     for ( i = 0; i < grid.vol; i++ ) { grid.data[i] = grid.nul; }
     grid.stats = new Grid_tc<float>::GridStats[grid.nb];
 
-    if (grid.coordinateSys == nullptr) { grid.coordinateSys = new char[10000]; } // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+    if (grid.coordinateSys == nullptr) { grid.coordinateSys = new char[10000]; } // Using arbitrary large size for simplicity of implementation. Not a good idea, but -O3 should fix this for me
 
     // set default band names
-    //bandNames = new std::string[nb];
     grid.bandNames = new char*[grid.nb];
-    for (int j = 0; j < grid.nb; j++) { grid.bandNames[j] = new char[10000]; }  // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+    for (int j = 0; j < grid.nb; j++) { grid.bandNames[j] = new char[10000]; }  // Same here!
 
     std::stringstream* ss_ptr = &ss;
 
     for ( i = 0; i < grid.nb; i++ ) {
         ss.str(std::string());      // clear stringstream
         ss << "Band " << i + 1;
-        //bandNames[i] = ss.str();
-        strcpy(grid.bandNames[i], ss.str().c_str());  // XXX using strcpy() instead of std::string interface for copy triviality
-        //ss_ptr->str(std::string());
-	//ss_ptr->operator<<("Band ").operator<<(i + 1);  // XXX FIXME I JUST COMMENTED OUT THIS STUFF FOR NOW, I DON'T SEE THE POINT OF IT. IT CAUSES A BAD free() SOMEWHERE I THINK!
-	//bandNames[i] = ss_ptr->str();
-	//strcpy(bandNames[i+1], ss_ptr->str().c_str());  // XXX using strcpy() instread of std::string interface for copy triviality
+        strcpy(grid.bandNames[i], ss.str().c_str());
     }
-    /* END PASTED CONSTRUCTOR FOR GRID */
+
+    /* END MANUAL PARAMETERIZED CONSTRUCTOR FOR GRID */
 
     grid.set_noData(info.nodata);
     const char* tmp_ptr_b = info.interleave.c_str();
@@ -359,7 +352,7 @@ void loadBandHelper (Grid_tc<T> & grid, int k, int ngrids, std::ifstream & file,
         int n = grid.get_size();
         file.ignore(n * k * bytes);
         //loadGridHelper(grid, file, data, n, bytes, swap);
-        loadGridHelper(grid, file, data, 100, bytes, swap);  // XXX using very small size here
+        loadGridHelper(grid, file, data, 100, bytes, swap);  // FIXME XXX (need to remove?) using very small size here
     }
     
     // load band-interleave by pixel
@@ -440,12 +433,12 @@ Grid_tc<float> loadBand (const std::string & fn, int k)
     for ( i = 0; i < grid.vol; i++ ) { grid.data[i] = grid.nul; }
     grid.stats = new Grid_tc<float>::GridStats[grid.nb];
 
-    if (grid.coordinateSys == nullptr) { grid.coordinateSys = new char[10000]; } // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+    if (grid.coordinateSys == nullptr) { grid.coordinateSys = new char[10000]; } // Using very large size for simplicity in implementation. -O3 flag should fix this!
 
     // set default band names
     //bandNames = new std::string[nb];
     grid.bandNames = new char*[grid.nb];
-    for (int j = 0; j < grid.nb; j++) { grid.bandNames[j] = new char[10000]; }  // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+    for (int j = 0; j < grid.nb; j++) { grid.bandNames[j] = new char[10000]; }
 
     std::stringstream* ss_ptr = &ss;
 
@@ -453,17 +446,13 @@ Grid_tc<float> loadBand (const std::string & fn, int k)
         ss.str(std::string());      // clear stringstream
         ss << "Band " << i + 1;
         //bandNames[i] = ss.str();
-        strcpy(grid.bandNames[i], ss.str().c_str());  // XXX using strcpy() instead of std::string interface for copy triviality
-        //ss_ptr->str(std::string());
-	//ss_ptr->operator<<("Band ").operator<<(i + 1);  // XXX FIXME I JUST COMMENTED OUT THIS STUFF FOR NOW, I DON'T SEE THE POINT OF IT. IT CAUSES A BAD free() SOMEWHERE I THINK!
-	//bandNames[i] = ss_ptr->str();
-	//strcpy(bandNames[i+1], ss_ptr->str().c_str());  // XXX using strcpy() instread of std::string interface for copy triviality
+        strcpy(grid.bandNames[i], ss.str().c_str());
     }
     /* END PASTED CONSTRUCTOR FOR GRID */
 
 
     grid.set_noData(info.nodata);
-    const char* tmp_ptr = info.interleave.c_str();  // XXX this might break
+    const char* tmp_ptr = info.interleave.c_str();  // this might break
     grid.set_interleave(tmp_ptr);
     
     // set geographic information

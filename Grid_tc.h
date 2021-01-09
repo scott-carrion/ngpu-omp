@@ -32,8 +32,7 @@ struct Grid_tc {
         int         nb;                     // number bands
         int         sz;                     // number cells per band
         int         vol;                    // total number cells
-        //std::string * bandNames;            // names of each band
-        char**       bandNames;		    // XXX names of each band, using char* so it's trivially copyable
+        char**       bandNames;		    // names of each band, using char* so it's trivially copyable
         int         cw;                     // collar width of noData
         
         // data
@@ -52,18 +51,6 @@ struct Grid_tc {
         unsigned char checkInterleave(
             const std::string & ) const;
         
-    //public:
-        // constructors
-        //Grid_tc(int r=1, int c=1, int b=1);    // default
-        //Grid_tc(const Grid_tc<T> &);              // copy  XXX COPY CONSTRUCTOR NOT ALLOWED, THIS HAS TO BE TRIVIALLY COPYABLE!
-        //Grid_tc(const Grid_tc<T> &, int);         // copy all but data  XXX NOT ALLOWED, THIS HAS TO BE TRIVIALLY COPYABLE!
-        
-        //destructor
-        //~Grid_tc();  // XXX DESTRUCTOR NOT ALLOWED, THIS HAS TO BE TRIVIALLY COPYABLE!
-        
-        // operators   XXX COPY ASSIGNMENT NOT ALLOWED, THIS HAS TO BE TRIVIALLY COPYABLE!
-        //Grid_tc<T> &   operator=(              // assignment
-        //              const Grid_tc<T> &);
         T &         operator[](int);        // element access
         T           operator[](int) const;  // element access
         
@@ -137,164 +124,6 @@ struct Grid_tc {
 };
 
 // CONSTRUCTORS / DESTRUCTOR ////////////////////////////////////////
-/*
-// Default constructor.
-template <typename T>
-Grid_tc<T>::Grid_tc ( int c, int r, int b )
-: nr(r), nc(c), nb(b), sz(r*c), vol(r*c*b), ilv(INTERLEAVE_BSQ),
-    nul(-1), cw(0)
-{
-
-    int i;
-    std::stringstream ss;
-    
-    // set default noData to -9999 if possible
-    if ( sizeof(T) > 1 ) nul = -9999;
-    
-    // initialize array to noData
-    data = new T[vol];
-
-    for ( i = 0; i < vol; i++ ) { data[i] = nul; }
-    stats = new GridStats[nb];
-
-    if (coordinateSys == nullptr) { coordinateSys = new char[10000]; } // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
-
-    // set default band names
-    //bandNames = new std::string[nb];
-    bandNames = new char*[nb];
-    for (int j = 0; j < nb; j++) { bandNames[j] = new char[10000]; }  // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
-
-    std::stringstream* ss_ptr = &ss;
-
-    for ( i = 0; i < nb; i++ ) {
-        ss.str(std::string());      // clear stringstream
-        ss << "Band " << i + 1;
-        //bandNames[i] = ss.str();
-        strcpy(bandNames[i], ss.str().c_str());  // XXX using strcpy() instead of std::string interface for copy triviality
-        //ss_ptr->str(std::string());
-	//ss_ptr->operator<<("Band ").operator<<(i + 1);  // XXX FIXME I JUST COMMENTED OUT THIS STUFF FOR NOW, I DON'T SEE THE POINT OF IT. IT CAUSES A BAD free() SOMEWHERE I THINK!
-	//bandNames[i] = ss_ptr->str();
-	//strcpy(bandNames[i+1], ss_ptr->str().c_str());  // XXX using strcpy() instread of std::string interface for copy triviality
-    }
-
-}
-*/
-/*
-// Copy constructor.
-template <typename T>
-Grid_tc<T>::Grid_tc ( const Grid_tc<T> & g )
-: nr(g.nr), nc(g.nc), nb(g.nb), sz(g.sz), vol(g.vol), ilv(g.ilv),
-    nul(g.nul), cw(g.cw)
-{
-    int i;
-
-    // initialize array to noData
-    data = new T[vol];
-    for ( i = 0; i < vol; i++ ) { data[i] = g.data[i]; }
-    stats = new GridStats[nb];
-    
-    // set band names to input grid's band names
-    bandNames = new std::string[nb];
-
-    for ( i = 0; i < nb; i++ ) {
-        bandNames[i] = g.bandNames[i].c_str();
-        stats[i] = g.stats[i];
-    }
-    
-    // set geography
-    mapInfo = MapInfo_tc(g.mapInfo);
-    coordinateSys = std::string(g.coordinateSys);
-}
-*/
-// Semi-copy constructors; copies geography and dimensions, but
-// not data.
-/*
-template <typename T>
-Grid_tc<T>::Grid_tc ( const Grid_tc<T> & g, int k )
-: nr(g.nr), nc(g.nc), nb(g.nb), sz(g.sz), vol(g.vol), ilv(g.ilv),
-    nul(g.nul), cw(0)
-{
-    int i;
-    std::stringstream ss;
-    
-    // initialize array to noData
-    data = new T[vol];
-
-    for ( i = 0; i < vol; i++ ) { data[i] = nul; }
-    stats = new GridStats[nb];
-    
-    if (coordinateSys == nullptr) { coordinateSys = new char[10000]; } // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
-    
-    // set default band names
-    //bandNames = new std::string[nb];
-    bandNames = new char*[nb];
-    
-    for (int j = 0; j < nb; j++) { bandNames[j] = new char[10000]; }  // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
-
-    for ( i = 0; i < nb; i++ ){
-        ss.str(std::string());      // clear stringstream
-        ss << "Band " << i + 1;
-        //bandNames[i] = ss.str();
-        strcpy(bandNames[i], ss.str().c_str());
-    }
-    
-    // set geography
-    mapInfo = MapInfo_tc(g.mapInfo);
-    //coordinateSys = std::string(g.coordinateSys);
-    strcpy(coordinateSys, g.coordinateSys);  // XXX using strcpy() instead of std::string as before FIXME Happening here... no coordinateSys valid location
-}
-*/
-/*
-// Destructor.
-template <typename T>
-Grid_tc<T>::~Grid_tc ()
-{
-    delete [] data;
-    delete [] bandNames;
-    delete [] stats;
-}
-
-// OPERATORS //////////////////////////////////////////////////////////////////
-
-template <typename T>
-Grid_tc<T> & Grid_tc<T>::operator= ( const Grid_tc<T> & g )
-{
-    int i;
-    
-    nr = g.nr;
-    nc = g.nc;
-    nb = g.nb;
-    sz = g.sz;
-    vol = g.vol;
-    ilv = g.ilv;
-    nul = g.nul;
-    cw = g.cw;
-    
-    // set array to input grid's values
-    if ( data ) delete [] data;
-    data = new T[vol];
-
-    for ( i = 0; i < vol; i++ ) { data[i] = g.data[i]; }
-    stats = new GridStats[nb];
-    
-    // set band names to input grid's band names
-    if ( bandNames ){ delete [] bandNames; }
-    bandNames = new std::string[nb];
-
-    for ( i = 0; i < nb; i++ ){
-        bandNames[i] = g.bandNames[i].c_str();
-        stats[i] = g.stats[i];
-    }
-    
-    // set geography
-    // mapInfo = MapInfo(g.mapInfo);
-    mapInfo = MapInfo_tc(g.mapInfo);  // XXX this is to be compatible (albeit temporarily) with the MapInfo_tc constructor
-    coordinateSys = std::string(g.coordinateSys);
-    
-    return *this;
-}
-*/
-
 template <typename T>
 T & Grid_tc<T>::operator[] ( int idx )
 { return data[idx]; }
@@ -384,21 +213,7 @@ template <typename T> std::string Grid_tc<T>::get_bandName ( int band )
 template <typename T> int Grid_tc<T>::get_collarWidth () const
 { return cw; }
 
-// fetch index for a given i (row), j (column), and k (band).
-/* XXX trying to simplify this to see if getIndex works as intended...
-template <typename T>
-int Grid_tc<T>::getIndex ( int i, int j, int k ) const
-{
-    if ( ilv == INTERLEAVE_BIP ) return nb * (i*nc + j) + k;
-    if ( ilv == INTERLEAVE_BIP ) return nb * (i*nc + j) + k;
-    else if ( ilv == INTERLEAVE_BIL ) return i*nc*nb + k*nc + j;
-    else return k*sz + i*nc + j; // assume bsq
-}
-template <typename T> int Grid_tc<T>::getIndex(int i, int j) const
-{ return getIndex(i, j, 0); }
-*/
-
-// XXX my simplified version
+// fetch index for a given i (row), j (column), and k (band) (simplified).
 template <typename T>
 int Grid_tc<T>::getIndex ( int i, int j, int nrows, int ncols, int nbands, bool debug_flag) const
 {
@@ -417,7 +232,7 @@ int Grid_tc<T>::getIndex ( int i, int j, int nrows, int ncols, int nbands, bool 
 }
 
 template <typename T>
-int Grid_tc<T>::getIndex (int i, int j, int k) const  // TODO: THIS FUNCTION NOT UPDATED TO BE COMPATIBLE WITH GPU WEIRDNESS.
+int Grid_tc<T>::getIndex (int i, int j, int k) const  // This overload of getIndex() left in to maintain compatibility outside the parallel regions
 {
     if ( ilv == INTERLEAVE_BIP ) return nb * (i*nc + j) + k;
     if ( ilv == INTERLEAVE_BIP ) return nb * (i*nc + j) + k;
@@ -462,8 +277,7 @@ template <typename T>
 void Grid_tc<T>::clearGeography ()
 {
     mapInfo = MapInfo_tc();
-    //coordinateSys = std::string();
-    strcpy(coordinateSys, "");  // XXX As before, using strcpy() instead
+    strcpy(coordinateSys, "");
 }
 
 template <typename T>
@@ -473,19 +287,14 @@ void Grid_tc<T>::setGeography ( const std::string & info,
     // Basically doing the parameterized constructor's job here, since it isn't
     // allowed in order to be a trivial type
     mapInfo = MapInfo_tc(); mapInfo.parseENVI(info);
-
-
-
-
-    //coordinateSys = std::string(sys);
     coordinateSys = new char[sys.length()+1];
-    strcpy(coordinateSys, sys.c_str());  // XXX As before, using strcpy() instead
+    strcpy(coordinateSys, sys.c_str());
 }
 
 template <typename T>
 void Grid_tc<T>::set_nbands(int n)
 {
-    //int               i;  // iterator
+    // Note: Not NVIDIA GPU safe! Uses STL library.
     std::stringstream ss;
     
     // adjust dimensions
@@ -499,8 +308,7 @@ void Grid_tc<T>::set_nbands(int n)
     
     // replace band name array with new number of bands
     delete bandNames;
-    //bandNames = new std::string[nb];
-    bandNames = new char*[nb];  // XXX use char* instead for copy triviality
+    bandNames = new char*[nb];
 
     for (int i = 0; i < nb; i++){
         ss.str(std::string()); // clear stringstream;

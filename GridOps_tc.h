@@ -114,7 +114,6 @@ void getNearest4_tc(const Grid_tc<T> & g, double i0, double j0, GridCell<T>* v, 
     //	printf("g.nrows() is %d and g.ncols() is %d\n", g.nrows(), g.ncols());
     //}
 
-
     // get upper-left cell /*
     int i = floor(i0 - 0.5);
     int j = floor(j0 - 0.5);
@@ -126,9 +125,7 @@ void getNearest4_tc(const Grid_tc<T> & g, double i0, double j0, GridCell<T>* v, 
     if ( j + 1 >= ncols ) j = ncols - 2;
     
     // add points to vector
-    //GridCell<T>* v = (GridCell<T>*)(std::malloc(sizeof(GridCell<T>) * 4));  // XXX instead of a std::vector, use std::malloc() and native array!
     // Instead of allocating a new v every time, pass a pointer to GridCells (should be of length 4 at least) as a parameter
-
 
     v[0] = GridCell<T>(i,   j,   g.getValue(i,   j, nrows, ncols));
     v[1] = GridCell<T>(i,   j+1, g.getValue(i,   j+1, nrows, ncols));
@@ -186,13 +183,9 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
     bool flag;
     int i, j, k, kk, a, d;
     double ii, jj, z, cosAz, sinAz, angle, Amax, sum;
-    //std::vector<GridCell<T> > cells;
-    // GridCell<T>* cells = (GridCell<T>*)(std::malloc(sizeof(T) * 4));  // XXX using a native C array of size 4 to be compatible with NVIDIA hardware
-    // Grid_tc<T> out(dem, 1);
     Grid_tc<T> out;
-    // XXX pasting in the copy constructor to keep this type trivial
 
-    /* BEGIN PASTED SEMI COPY CONSTRUCTOR */
+    /* BEGIN MANUAL SEMI COPY CONSTRUCTOR */
     out.nr = dem.nr;
     out.nc = dem.nc;
     out.nb = dem.nb;
@@ -211,13 +204,13 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
     for ( it = 0; it < out.vol; it++ ) { out.data[it] = out.nul; }
     out.stats = new typename Grid_tc<T>::GridStats[out.nb];
     
-    if (out.coordinateSys == nullptr) { out.coordinateSys = new char[10000]; } // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+    if (out.coordinateSys == nullptr) { out.coordinateSys = new char[10000]; } // Using very large size for simplicity. -O3 flag should help here!
     
     // set default band names
     //bandNames = new std::string[nb];
     out.bandNames = new char*[out.nb];
     
-    for (int j = 0; j < out.nb; j++) { out.bandNames[j] = new char[10000]; }  // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+    for (int j = 0; j < out.nb; j++) { out.bandNames[j] = new char[10000]; }  // Same as above
 
     for ( it = 0; it < out.nb; it++ ){
         ss.str(std::string());      // clear stringstream
@@ -227,13 +220,12 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
     }
     
     // set geography
-    //mapInfo = MapInfo_tc(g.mapInfo);
-    out.mapInfo = MapInfo_tc(dem.mapInfo);  // XXX this might fail...
+    out.mapInfo = MapInfo_tc(dem.mapInfo);
 
 
     //coordinateSys = std::string(g.coordinateSys);
-    strcpy(out.coordinateSys, dem.coordinateSys);  // XXX using strcpy() instead of std::string as before FIXME Happening here... no coordinateSys valid location
-    /* END PASTED SEMI COPY CONSTRUCTOR */
+    strcpy(out.coordinateSys, dem.coordinateSys); 
+    /* END MANUAL SEMI COPY CONSTRUCTOR */
     
     int count = 0;
 
@@ -250,9 +242,7 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
     //#pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     for ( i = 0; i < nrows; ++i ) {
         for ( j = 0; j < ncols; ++j ) { 
-	    GridCell<T>* cells = (GridCell<T>*)(std::malloc(sizeof(GridCell<T>) * 4));  // XXX declaring cells here, since it's used internally only anyway; temporarily removing it to see if malloc is the issue
-            //std::cout << "\rskyview " << (static_cast<double>(count++) / dem.size()) << "%        ";
-            // Using printf() instead
+	    GridCell<T>* cells = (GridCell<T>*)(std::malloc(sizeof(GridCell<T>) * 4));  // Declaring cells here, since it's used internally only anyway
 	    //printf("\rskyview %f%%        \n", (static_cast<double>(count++) / dem.size()));
         
             // k = dem.getIndex(i, j);
@@ -285,12 +275,12 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
 
                     // interpolate value at point
                     flag = false;
-		    getNearest4_tc(dem, ii, jj, cells, nrows, ncols, nbands, false);  // XXX trying to see if dynamic memory allocation is the problem...
+		    getNearest4_tc(dem, ii, jj, cells, nrows, ncols, nbands, false);
 
 		// In getNearest4_tc, cells is set to an array of size 4. It is always size 4, so use that instead of
 		// what would normally be cells.size()
 		for ( kk = 0; !flag && kk < 4; ++kk ){
-                        if ( cells[kk].value == dem_no_data ) {  // XXX temporarily removing all references to cells to see if malloc is the problem...
+                        if ( cells[kk].value == dem_no_data ) {
                             flag = true;
 			}
                     } 
@@ -299,7 +289,7 @@ Grid_tc<T> skyview ( const Grid_tc<T> & dem, int daz, double r )
                        continue;
                     }
 
-		    z = bilinearInterpolate_tc(ii, jj, cells, false);  // XXX trying to see if dynamic memory allocation is the problem...
+		    z = bilinearInterpolate_tc(ii, jj, cells, false);
 
                     // track maximum angle from horizontal
                     angle = atan((z - dem[k]) / (d * dem_dx));
@@ -343,13 +333,9 @@ Grid_tc<T> prominence ( const Grid_tc<T> & dem, int daz, double r )
     bool flag;
     int i, j, k, kk, a, d;
     double ii, jj, z, cosAz, sinAz, angle, Amax, sum;
-    //std::vector<GridCell<T> > cells;
-    //GridCell<T>* cells;
-    //Grid_tc<T> out(dem, 1);
     Grid_tc<T> out;
-    // XXX pasting in the copy constructor to keep this type trivial
 
-    /* BEGIN PASTED SEMI COPY CONSTRUCTOR */
+    /* BEGIN MANUAL SEMI COPY CONSTRUCTOR */
     out.nr = dem.nr;
     out.nc = dem.nc;
     out.nb = dem.nb;
@@ -368,32 +354,30 @@ Grid_tc<T> prominence ( const Grid_tc<T> & dem, int daz, double r )
     for ( it = 0; it < out.vol; it++ ) { out.data[it] = out.nul; }
     out.stats = new typename Grid_tc<T>::GridStats[out.nb];
     
-    if (out.coordinateSys == nullptr) { out.coordinateSys = new char[10000]; } // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+    if (out.coordinateSys == nullptr) { out.coordinateSys = new char[10000]; } // Using a very large size for simplicity here. -O3 flag should fix this!
     
     // set default band names
-    //bandNames = new std::string[nb];
     out.bandNames = new char*[out.nb];
     
-    for (int j = 0; j < out.nb; j++) { out.bandNames[j] = new char[10000]; }  // XXX just using a very large size for now. Might want to FIXME by reconsidering the size to allocate here
+    for (int j = 0; j < out.nb; j++) { out.bandNames[j] = new char[10000]; }  // Same as above
 
     for ( it = 0; it < out.nb; it++ ){
         ss.str(std::string());      // clear stringstream
         ss << "Band " << i + 1;
-        //bandNames[i] = ss.str();
         strcpy(out.bandNames[it], ss.str().c_str());
     }
     
     // set geography
-    //mapInfo = MapInfo_tc(g.mapInfo);
-    out.mapInfo = MapInfo_tc(dem.mapInfo);  // XXX this might fail...
+    out.mapInfo = MapInfo_tc(dem.mapInfo);
 
 
-    //coordinateSys = std::string(g.coordinateSys);
-    strcpy(out.coordinateSys, dem.coordinateSys);  // XXX using strcpy() instead of std::string as before FIXME Happening here... no coordinateSys valid location
-    /* END PASTED SEMI COPY CONSTRUCTOR */
+    strcpy(out.coordinateSys, dem.coordinateSys);  // using strcpy() instead of std::string as before
+    
+    /* END MANUAL SEMI COPY CONSTRUCTOR */
     
     int count = 0;
-    // hard-coded values from dem here
+    // Hard-coded values from dem here. Calling these constituent functions within the parallel region returns compiler defaults (almost always type equivalent of 0) instead of values,
+    // even though manual memory checking reveals that the data the member functions should return is mapped and uncorrupted on the device. Doing it this way circumnavigates this
     int nrows = dem.nrows(); int ncols = dem.ncols(); int nbands = dem.nbands();
     double dem_dx = dem.dx(); T dem_no_data = dem.noData();
     int dem_nb = dem.nb; int dem_nc = dem.nc;
@@ -405,7 +389,7 @@ Grid_tc<T> prominence ( const Grid_tc<T> & dem, int daz, double r )
     //#pragma omp parallel for private(flag, i, ii, j, jj, k, kk, a, d, sinAz, cosAz, Amax, sum, count, angle, z) shared(interval, dmax, deg2rad, out) collapse(2)
     for ( i = 0; i < nrows; ++i ) {
         for ( j = 0; j < ncols; ++j ) {
-	    GridCell<T>* cells = (GridCell<T>*)(std::malloc(sizeof(GridCell<T>) * 4));  // XXX declaring cells here, since it's used internally only anyway
+	    GridCell<T>* cells = (GridCell<T>*)(std::malloc(sizeof(GridCell<T>) * 4));  // Declaring cells here, since it's only used internally and once per iteration anyway
 	    //std::cout << "\rprominence " << (static_cast<double>(count++) / dem.size()) << "%        ";
 	    //printf("\rprominence %f%%        \n", (static_cast<double>(count++) / dem.size()));
             
@@ -438,7 +422,7 @@ Grid_tc<T> prominence ( const Grid_tc<T> & dem, int daz, double r )
                     
 		    // interpolate value at point
                     flag = false;
-                    getNearest4_tc(dem, ii, jj, cells, nrows, ncols, nbands, false);  // XXX UPDATE ME WITH NEW SIGNATURE
+                    getNearest4_tc(dem, ii, jj, cells, nrows, ncols, nbands, false);
 		    
 		    // In getNearest4_tc, cells is set to an array of size 4. It is always size 4, so use that instead of
 		    // what would normally be cells.size()
@@ -462,7 +446,7 @@ Grid_tc<T> prominence ( const Grid_tc<T> & dem, int daz, double r )
                 sum += Amax * Amax; 
             }
             out[k] = sum * interval;
-	    std::free(cells);
+	    std::free(cells);  // Don't forget to free cells! We're not using it anymore after this iteration, after all
         }
     }
     //std::cout << "\rprominence " << (static_cast<double>(count++) / dem.size()) << "%\n";
